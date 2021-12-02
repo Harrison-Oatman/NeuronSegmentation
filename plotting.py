@@ -253,7 +253,7 @@ def embedscattercolor(im,xs,ys,c,bbs,s=1,cmap='gist_earth'):
     """
     embedded scatter plot with the option to specify pointwise colors
     """
-    fig, main, axes = embedplot(im,bbs,show=False,name='Endpoints',cmap=cmap)
+    fig, main, axes = embedimg(im,bbs,show=False,name='Endpoints',cmap=cmap)
 
     main.scatter(xs,ys,s=s,c=c)
 
@@ -279,7 +279,7 @@ def embedscattercolornoseries(im,xs,ys,c,bbs,s=1,cmap='gist_earth'):
     """
     embed scatter color with a single color
     """
-    fig, main, axes = embedplot(im,bbs,show=False,name='Endpoints',cmap=skLight)
+    fig, main, axes = embedimg(im,bbs,show=False,name='Endpoints',cmap=skLight)
 
     main.scatter(xs,ys,s=s,c=c)
 
