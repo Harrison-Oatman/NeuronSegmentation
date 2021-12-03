@@ -1,3 +1,4 @@
+import numpy as np
 from skimage.morphology import dilation, erosion, closing, opening, disk
 
 """
