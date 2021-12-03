@@ -1,4 +1,4 @@
-from plotting.py import embedscatter
+from plotting import embedscatter
 import numpy as np
 
 def align_RNA(RNA_a, RNA_b):

@@ -210,7 +210,7 @@ def get_crossing_mask(img, cps):
             """
             I need to print space or else this function breaks wtf???
             """
-            print(space)
+            space = space + 0
             ls = label(space)
 
             # since this is a crossing point, we should have four background regions

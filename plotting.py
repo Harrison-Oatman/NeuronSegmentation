@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.patches as patches
+import matplotlib as mpl
 
 """
 Generating Color Maps

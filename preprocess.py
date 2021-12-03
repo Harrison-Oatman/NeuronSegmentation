@@ -1,9 +1,12 @@
 import numpy as np
+import pandas as pd
+import cv2
 from PIL import Image
+
 
 def write_soma_channel(image, rna):
     newimage = image.copy()
-    somabarcodes = np.load(constpath+"somabarcodes.npy")
+    somabarcodes = np.load("const\\"+"somabarcodes.npy")
     somarna = rna[np.isin(rna["barcode_id"], somabarcodes)]
     xs = np.array(somarna["global_x"]).astype(np.int32)
     ys = np.array(somarna["global_y"]).astype(np.int32)
@@ -14,14 +17,13 @@ def write_soma_channel(image, rna):
 def write_process_channel(image, rna):
     newimage = image.copy()
     newimage[:,:,1] = 0
-    processbarcodes = np.load(constpath+"processbarcodes.npy")
+    processbarcodes = np.load("const\\"+"processbarcodes.npy")
     processrna = rna[np.isin(rna["barcode_id"], processbarcodes)]
     xs = np.array(processrna["global_x"]).astype(np.int32)
     ys = np.array(processrna["global_y"]).astype(np.int32)
     print(len(xs))
     newimage[ys,xs,1] = 255
     return newimage
-
 
 def preprocess(imgfile, rnafile, out):
     rna = pd.read_csv(rnafile)
@@ -31,3 +33,17 @@ def preprocess(imgfile, rnafile, out):
     saveim = Image.fromarray(img)
     saveim.save(out)
     return img
+
+def preprocessing_stage(datapath):
+    imgfile = datapath + "Map2TauImage.png"
+    rnafile = datapath + "barcodes.csv"
+    outfile = datapath + "preprocessed.png"
+    preprocessed = preprocess(imgfile, rnafile, outfile)
+    return preprocessed
+
+if __name__ == '__main__':
+    import os
+    current_directory = os.path.dirname(__file__)
+    parent_directory = os.path.split(current_directory)[0]
+    datapath = parent_directory + "\\training\\0520\\"
+    preprocessing_stage(datapath)

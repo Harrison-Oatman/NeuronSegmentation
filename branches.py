@@ -4,6 +4,7 @@ from tqdm import tqdm
 import scipy.spatial as spatial
 from scipy.spatial.distance import cdist
 from skimage.feature import canny
+from skimage.measure import regionprops
 import heapq
 
 class Segment:
@@ -119,9 +120,9 @@ class Segment:
         return aclosest, bclosest, dist.min()
 
 class Process(Segment):
-        """
-        Subclass used for dendrites
-        """
+    """
+    Subclass used for dendrites
+    """
     def get_rnadistances(self, source):
         """
         Get the distance of each RNA in the region from the source pixel
@@ -371,10 +372,10 @@ def buildSomas(image, rna):
     """
     props = regionprops(image)
 
-    rnaxs = np.array(RNA['global_x'])
-    rnays = np.array(RNA['global_y'])
+    rnaxs = np.array(rna['global_x'])
+    rnays = np.array(rna['global_y'])
     rnalocs = np.array([rnays,rnaxs]).T
-    rnabc = np.array(RNA['barcode_id'])
+    rnabc = np.array(rna['barcode_id'])
 
     rnaxpx = np.array(np.floor(rnaxs),dtype=np.int)
     rnaypx = np.array(np.floor(rnays),dtype=np.int)
