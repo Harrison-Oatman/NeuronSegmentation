@@ -89,8 +89,8 @@ KDE plots
 
 def plotKDE(values, title, bw_method = 0.1,
              xlabel = "value", ylabel = "kernel density estimate",
-             show = True, saveFile = None,figsize=(11,9)):
-    return plotKDEs([values], title, None, bw_method, xlabel, ylabel, show)
+             show = True, savefile = None,figsize=(11,9)):
+    return plotKDEs([values], title, None, bw_method, xlabel, ylabel, show, savefile, figsize)
 
 def plotKDEs(valuesList, title, labels = None, bw_methods = 0.1,
              xlabel = "value", ylabel = "kernel density estimate",

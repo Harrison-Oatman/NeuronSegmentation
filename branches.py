@@ -7,13 +7,12 @@ from skimage.feature import canny
 from skimage.measure import regionprops
 import heapq
 
-class Segment:
 
+class Segment:
     """
     Class to represent a region of dendrite tissue which can contain RNA
     data.
     """
-
     def __init__(self,props):
         """
         At initialization, we store some spatial properties of the region
@@ -63,33 +62,29 @@ class Segment:
         ---Returns---
         self.neighbors[label]: list of neighbors found
         """
-        n,m = labeledImage.shape
+        n, m = labeledImage.shape
         neighbors = []
         d = max_dist
-        while True:
-            # trim to keep smaller image within larger image
-            ymin = max(0,self.ymin-d)
-            ymax = min(n-1,self.ymax+d-1)
-            xmin = max(0,self.xmin-d)
-            xmax = min(m-1,self.xmax+d-1)
 
-            # find other objects within smaller image
-            nbs = np.unique(labeledImage[ymin:ymax,xmin:xmax])
+        # trim to keep smaller image within larger image
+        ymin = max(0,self.ymin-d)
+        ymax = min(n-1,self.ymax+d-1)
+        xmin = max(0,self.xmin-d)
+        xmax = min(m-1,self.xmax+d-1)
 
-            # remove background from neighbor list
-            nbs = nbs[nbs!=0]
+        # find other objects within smaller image
+        nbs = np.unique(labeledImage[ymin:ymax,xmin:xmax])
 
-            # remove self from neighbor list
-            if exclude is not None:
-                nbs = nbs[nbs!=exclude]
+        # remove background from neighbor list
+        nbs = nbs[nbs!=0]
 
-            # ret
-            if len(nbs > 0):
-                self.neighbors[label] = nbs
-                break
+        # remove self from neighbor list
+        if exclude is not None:
+            nbs = nbs[nbs!=exclude]
+
+        self.neighbors[label] = nbs
+
         return self.neighbors[label]
-            # else:
-            #     d += 10
 
     def distance_from(self, segment):
         """
@@ -119,6 +114,7 @@ class Segment:
 
         return aclosest, bclosest, dist.min()
 
+
 class Process(Segment):
     """
     Subclass used for dendrites
@@ -139,8 +135,10 @@ class Process(Segment):
         self.dis = disgraph
         return disgraph[self.rna_px[:,0]-self.ymin,self.rna_px[:,1]-self.xmin]
 
+
 class Soma(Segment):
     pass
+
 
 class Region(object):
     """
@@ -219,11 +217,13 @@ class Region(object):
         self.edges = np.bitwise_and(self.im, canny(self.im))
         return self.edges
 
+
 class JoinedSegments:
     """
     Base class which Root and Branch inherit from
     """
     pass
+
 
 class Root(JoinedSegments):
     """
@@ -235,6 +235,10 @@ class Root(JoinedSegments):
         self.cellid = soma.label
         self.end = soma
         self.get_length()
+        self.ymin = soma.ymin
+        self.ymax = soma.ymax
+        self.xmin = soma.xmin
+        self.xmax = soma.xmax
 
     def get_length(self):
         """
@@ -257,6 +261,7 @@ class Root(JoinedSegments):
         if fetch:
             return self.rnaids.copy(), self.rnadists.copy()
 
+
 class Branch(JoinedSegments):
     """
     A JoinedSegment with a process at the end.
@@ -265,11 +270,18 @@ class Branch(JoinedSegments):
 
     def __init__(self, source:JoinedSegments, process:Process):
 
+        self.disIm = None
+        self.start_length = None
         self.source = source
         self.start = source.start
         self.cellid = source.cellid
         self.end = process
         self.get_length()
+
+        self.ymin = min(process.ymin, source.ymin)
+        self.ymax = max(process.ymax, source.ymax)
+        self.xmin = min(process.xmin, source.xmin)
+        self.xmax = max(process.xmax, source.xmax)
 
     def get_length(self):
         """
@@ -310,19 +322,20 @@ class Branch(JoinedSegments):
         rnadists: the distances of each RNA from the soma
         """
         # get RNA distribution up to here
-        allRNA, allRNAdists = self.source.get_rnadistances()
+        all_rna, all_rna_dists = self.source.get_rnadistances()
 
         # using closest pt to source calc rna distances and fetch rnaids
         selfdists = self.end.get_rnadistances(self.startpt)
         selfids = self.end.rna_index
 
         # modify distances to include distance along branch and add to total distribution
-        self.rnadists = np.append(allRNAdists, selfdists + self.start_length)
-        self.rnaids = np.append(allRNA, selfids)
+        self.rnadists = np.append(all_rna_dists, selfdists + self.start_length)
+        self.rnaids = np.append(all_rna, selfids)
 
         # only make copy if asked
         if fetch:
             return self.rnaids.copy(), self.rnadists.copy()
+
 
 def buildProcesses(image, rna):
     """
@@ -347,7 +360,7 @@ def buildProcesses(image, rna):
 
     rna_index = image[rnaypx,rnaxpx]
 
-    processes = []
+    processes = {}
 
     n = 5
 
@@ -355,9 +368,10 @@ def buildProcesses(image, rna):
         process = Process(prop)
         process.addRNA(rna_index==prop.label, rnalocs, rnabc)
 
-        processes.append(process)
+        processes[process.label]=process
 
     return processes
+
 
 def buildSomas(image, rna):
     """
@@ -382,12 +396,12 @@ def buildSomas(image, rna):
 
     rna_index = image[rnaypx,rnaxpx]
 
-    somas = []
+    somas = {}
 
     for prop in tqdm(props):
         soma = Soma(prop)
         soma.addRNA(rna_index==prop.label, rnalocs, rnabc)
 
-        somas.append(soma)
+        somas[soma.label] = soma
 
     return somas
