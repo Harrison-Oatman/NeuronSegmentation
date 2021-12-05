@@ -34,16 +34,34 @@ def preprocess(imgfile, rnafile, out):
     saveim.save(out)
     return img
 
+def small_preprocess(imgfile, rnafile, out):
+    rna = pd.read_csv(rnafile)
+    img = np.array(cv2.imread(imgfile))
+    img = write_soma_channel(img, rna)
+    img = write_process_channel(img, rna)
+    saveim = Image.fromarray(img[:1000,:1000])
+    saveim.save(out)
+    return img
+
+def small_preprocess(imgfile, rnafile, out):
+    rna = pd.read_csv(rnafile)
+    img = np.array(cv2.imread(imgfile))
+    img = write_soma_channel(img, rna)
+    img = write_process_channel(img, rna)
+    saveim = Image.fromarray(img[500:1000,500:1000])
+    saveim.save(out)
+    return img
+
 def preprocessing_stage(datapath):
     imgfile = datapath + "Map2TauImage.png"
     rnafile = datapath + "barcodes.csv"
-    outfile = datapath + "preprocessed.png"
-    preprocessed = preprocess(imgfile, rnafile, outfile)
+    outfile = datapath + "small_preprocessed.png"
+    preprocessed = small_preprocess(imgfile, rnafile, outfile)
     return preprocessed
 
 if __name__ == '__main__':
     import os
     current_directory = os.path.dirname(__file__)
     parent_directory = os.path.split(current_directory)[0]
-    datapath = parent_directory + "\\training\\0520\\"
+    datapath = parent_directory + "\\training\\0605\\"
     preprocessing_stage(datapath)
