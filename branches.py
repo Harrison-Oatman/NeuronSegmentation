@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import plotting
 from tqdm import tqdm
 
 import scipy.spatial as spatial
@@ -17,6 +19,10 @@ class Segment:
         """
         At initialization, we store some spatial properties of the region
         """
+        self.nrna = None
+        self.rna_index = None
+        self.rna_px = None
+        self.rna_loc = None
         self.label = props.label
         self.neighbors = {}
 
@@ -206,8 +212,10 @@ class Region(object):
                             heapq.heappush(frontier, candidate)
 
         disIm[disIm == np.inf] = -5
+        disIm = disIm[1:-1,1:-1]
+        disIm[pt] = 0
 
-        return disIm[1:-1,1:-1]
+        return disIm
 
 
     def neighbors(self, pt, val):
@@ -260,6 +268,9 @@ class Root(JoinedSegments):
 
         if fetch:
             return self.rnaids.copy(), self.rnadists.copy()
+
+    def plot(self, final_layer=False):
+        return [(self.ymin, self.xmin, self.ymax, self.xmax)], [self.end.region.im.copy()], self.end.rna_loc.copy()
 
 
 class Branch(JoinedSegments):
@@ -335,6 +346,28 @@ class Branch(JoinedSegments):
         # only make copy if asked
         if fetch:
             return self.rnaids.copy(), self.rnadists.copy()
+
+    def plot(self, final_layer=True):
+        bboxes, images, rna_locs = self.source.plot(final_layer=False)
+        bboxes.append([self.end.ymin, self.end.xmin, self.end.ymax, self.end.xmax])
+        images.append(self.end.region.im)
+        rna_locs = np.vstack((rna_locs, self.end.rna_loc.copy()))
+
+        if not final_layer:
+            return bboxes, images, rna_locs
+
+        else:
+            image = np.zeros((self.ymax - self.ymin, self.xmax - self.xmin))
+            for i, im in enumerate(images):
+                bbox = bboxes[i]
+                image[(bbox[0]-self.ymin):(bbox[2]-self.ymin), (bbox[1]-self.xmin):(bbox[3]-self.xmin)] += im*(i + 1)
+
+
+        plotting.implot(image,cmap='cubehelix',vmax=len(bboxes)+2,show=False)
+        rna_locs[:,0] -= self.ymin
+        rna_locs[:,1] -= self.xmin
+
+        plt.scatter(rna_locs[:,1], rna_locs[:,0], c='#DC96FF', s=0.25)
 
 
 def buildProcesses(image, rna):

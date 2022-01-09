@@ -123,10 +123,8 @@ def plotKDEs(valuesList, title, labels = None, bw_methods = 0.1,
     ax.set_title(title)
     plt.show()
 
-    if savefile is None:
-        savefile = plotpath+title+".png"
-
-    f.savefig(savefile)
+    if savefile is not None:
+        f.savefig(savefile)
 
     return f, ax
 
@@ -134,16 +132,17 @@ def plotKDEs(valuesList, title, labels = None, bw_methods = 0.1,
 Image Plotting
 """
 
-def implot(image, dir, name = "temp", cmap=bgLight, buffer=None,
+def implot(image, dir=None, name = "temp", cmap=bgLight, buffer=None,
            show=True, figsize=(10,10),interpolation='antialiased',
-           theme=default, axes=False, title=None,alpha=1.0):
+           theme=default, axes=False, title=None,alpha=1.0,vmax=None):
     """
     plotting of an image, configured for my slideshows
     """
     plotImage = image.copy()
 
     # determine max value
-    vmax = np.max(plotImage)
+    if vmax is None:
+        vmax = np.max(plotImage)
 
     # set colors by theme
     mpl.rc('axes',edgecolor=theme['ax'])
@@ -167,14 +166,15 @@ def implot(image, dir, name = "temp", cmap=bgLight, buffer=None,
 
     ax1.imshow(plotImage,cmap=cmap, vmax=vmax, interpolation=interpolation,alpha=alpha)
 
-    plt.savefig(dir + name + ".png")
+    if dir is not None:
+        plt.savefig(dir + name + ".png")
 
     if show:
         plt.show()
 
     return fig, ax1
 
-def embedimg(image, bbs, dir, name = "temp", cmap=bgLight, buffer=None,
+def embedimg(image, bbs, dir=None, name = "temp", cmap=bgLight, buffer=None,
            show=True, width=10,interpolation='antialiased',
            theme=default, axticks=False, title=None,alpha=1.0):
     """
@@ -239,7 +239,8 @@ def embedimg(image, bbs, dir, name = "temp", cmap=bgLight, buffer=None,
 
     fig.tight_layout()
 
-    plt.savefig(dir + name + ".png")
+    if dir is not None:
+        plt.savefig(dir + name + ".png")
 
     if show:
         plt.show()
