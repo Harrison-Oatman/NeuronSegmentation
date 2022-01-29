@@ -4,16 +4,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-
 @dataclass
 class Rna:
     y: float
     x: float
     z: float
-
     barcode: int
-
     id: int
+
+    cell: int = 0
 
     def __str__(self):
         return f'({self.y},{self.x})'
@@ -22,6 +21,37 @@ class Rna:
 class Tester:
     def test(self, rna):
         return True
+
+
+class BarcodeTester(Tester):
+    def __init__(self, barcode_id):
+        self.id = barcode_id
+
+    def test(self, rna):
+        return rna.barcode == self.id
+
+
+class Getter:
+    def get(self, pt):
+        pass
+
+    def clear(self):
+        pass
+
+
+class RCVGetter(Getter):
+    def __init__(self, rcv):
+        self.rcv = rcv
+
+    def get(self, pt):
+        # print(pt)
+        # print(self.rcv)
+        # print(pt.barcode)
+        # print(self.rcv[pt.barcode])
+        self.rcv[pt.barcode] += 1.0
+
+    def clear(self):
+        self.rcv[:] = 0
 
 
 class Rect:
@@ -133,7 +163,7 @@ class Qtree:
                 if tester is None:
                     found.append(item)
                 else:
-                    if item.test(tester):
+                    if tester.test(item):
                         found.append(item)
 
         if self.divided:
@@ -170,7 +200,7 @@ class Qtree:
             for child in self.children:
                 child.draw(ax, bbox, c, lw)
 
-    def circle_query(self, bbox, center, radius2, found, tester=None):
+    def circle_query(self, bbox, center, radius2, found, tester=None, getter=Getter()):
         if not self.rect.intersects(bbox):
             return
 
@@ -178,26 +208,37 @@ class Qtree:
             if (point.y - center[0])**2 + (point.x - center[1])**2 < radius2:
                 if tester is None:
                     found.append(point)
+                    getter.get(point)
                 else:
                     if tester.test(point):
                         found.append(point)
+                        getter.get(point)
 
         if self.divided:
             for child in self.children:
-                child.circle_query(bbox, center, radius2, found)
+                child.circle_query(bbox, center, radius2, found, tester, getter)
 
-    def radius_query(self, center, radius, tester=None):
+    def radius_query(self, center, radius, tester=None, getter=None):
         bbox = Rect([center[0]-radius, center[1]-radius, radius*2, radius*2])
         radius2 = radius**2
         found = []
-        self.circle_query(bbox, center, radius2, found, tester=tester)
+        self.circle_query(bbox, center, radius2, found, tester=tester, getter=getter)
         return found
 
-    def get_nn(self, point, k, max_dist, tester=None, max_iters=10):
+    def get_nn(self, point, k, max_dist, tester=None, max_iters=10, rcv=None, id=None):
         delta = max_dist/4.0
         rad_guess = max_dist/2.0
+
+        # rcv specific code
+        if rcv is not None:
+            getter = RCVGetter(rcv[id, :])
+            # print(getter.rcv)
+        else:
+            getter = Getter()
+
         for i in range(max_iters):
-            neighbors = self.radius_query((point.y, point.x), rad_guess, tester)
+            getter.clear()
+            neighbors = self.radius_query((point.y, point.x), rad_guess, tester, getter)
             if len(neighbors) > k:
                 rad_guess -= delta
             elif len(neighbors) < k:
@@ -275,20 +316,21 @@ def convert_to_qtree(rna_dataframe, bbox, limit=10):
     rna_list = []
     for index, row in tqdm(rna_dataframe.iterrows()):
         z = row['global_z'] if 'global_z' in rna_dataframe.columns else 0
-        point = Rna(row['global_y'], row['global_x'], z, row['barcode_id'], index)
+        cell = row['cell_index'] if 'cell_index' in rna_dataframe.columns else 0
+        point = Rna(row['global_y'], row['global_x'], z, int(row['barcode_id']), index, cell=cell)
         qtree.add_rna(point)
         rna_list.append(point)
     return qtree, rna_list
 
 
 # qtree = Qtree([0.0, 0.0, 1.0, 1.0], 3)
-# rna = [Rna(np.random.rand(), np.random.rand(), 0.0, i, i) for i in range(5000)]
+# rna = [Rna(np.random.rand(), np.random.rand(), 0.0, i, i) for i in range(250)]
 #
 # for r in rna:
 #     qtree.add_rna(r)
-
+#
 # ax = plt.subplot()
-# # qtree.draw(ax)
+# qtree.draw(ax)
 # qtree.point_plot(ax)
 # # center_points = qtree.radius_query([0.5, 0.5], 0.25)
 # # nn = qtree.get_nn(rna[0], 500, 0.2)
@@ -301,3 +343,4 @@ def convert_to_qtree(rna_dataframe, bbox, limit=10):
 # group.expand(searcher, adder)
 # plot_points(ax, group.accepted, c='b')
 # plt.show()
+
