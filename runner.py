@@ -48,6 +48,7 @@ processImageFile = datapath + "processImage.npy"
 somaImageFile = datapath + "somaImage.npy"
 
 try:
+    print("loading process, soma images")
     processImage = np.load(processImageFile)
     somaImage = np.load(somaImageFile)
     thresholdedProcessImage = np.load(datapath + "thresholdedProcessImage.npy")
@@ -58,6 +59,7 @@ try:
     newThreshold = False
 
 except OSError:
+    print("some images not found, rebuilding")
     imname = 'preprocessed_Probabilities.png'
 
     datafile = datapath + imname
@@ -96,6 +98,7 @@ try:
         raise OSError()
 
 except OSError:
+    print("running assignment algorithm")
     assignments, process_labels, cell_image, new_rna = assignment.start_to_end(processImage, somaImage, RNA)
     cellImage = np.array(cell_image,dtype=np.int)
     permuted_cell_image = plotting.permute_image(cellImage)
@@ -104,8 +107,12 @@ except OSError:
     np.save(datapath+"cellImage.npy", cellImage)
     new_rna.to_csv(datapath+"algRNA.csv")
 
+print("loading complete, calculating accuracy")
+
 ab_a, ab_b, a_to_b, b_to_a = metrics.align_rna(RNA, new_rna)
 alg_master_accuracy = metrics.accuracy_set(ab_a, ab_b)
+
+print("getting human labeled boundaries")
 
 humanBodyImage, humanProcessImage, processNames = boundaries.getBoundaries(datapath)
 
@@ -114,3 +121,41 @@ preprocessed = np.dstack((preprocessed[:, :, 2], preprocessed[:, :, :2]))
 preprocessed[:, :, 1] //= 2
 ilastik = np.array(cv2.imread(datapath+"preprocessed_Probabilities.png"))
 ilastik[:, :, 0] //= 2
+
+bbox = [[700, 700, 500, 500], [2600, 2700, 600, 600]]
+# plotting.embedimg(preprocessed, bbox, dir=plotpath, name="preprocessed_embed")
+two_map = {0 : '#EDF3FA',
+        1 : '#2F5061',
+        2 : '#F28066',
+        3 : '#5EA2C4',
+        4 : '#FFAA96',
+        }
+
+two_map = {0 : '#F5FAFF',
+        1 : '#2F5061',
+        2 : '#F28066',
+        3 : '#2790C4',
+        4 : '#FF7859',
+        }
+
+diverge = {0 : '#EDF3FA',
+        1 : '#698EBF',
+        2 : '#5CBF84',
+        3 : '#E0EB9D',
+        4 : '#FFAA96',
+        }
+
+two_blue = {0 : '#F5FAFF',
+        2 : '#2F5061',
+        1 : '#2790C4',
+        }
+
+two_orange = {0 : '#F5FAFF',
+        1 : '#FFBAAB',
+        2 : '#E35434',
+        }
+
+two_map_mapped = colors.seqfromdict(two_map)
+diverge_mapped = colors.seqfromdict(diverge)
+
+print("complete")
