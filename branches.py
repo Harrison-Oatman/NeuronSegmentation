@@ -12,7 +12,7 @@ import heapq
 
 class Segment:
     """
-    Class to represent a region of dendrite tissue which can contain RNA
+    Class to represent a region of dendrite tissue which can contain rna
     data.
     """
     def __init__(self,props):
@@ -43,8 +43,8 @@ class Segment:
         Adds rna data to the segment
 
         ---Arguments---
-        iscontained: truth ndarray of which RNA in image are contained in Segment
-        rnaloc: ndarray of y,x locations of RNA
+        iscontained: truth ndarray of which rna in image are contained in Segment
+        rnaloc: ndarray of y,x locations of rna
         rnabc: ndarray of rna barcodes
         """
         # handles the rna contained within the segment
@@ -61,7 +61,7 @@ class Segment:
 
         ---Arguments---
         labeledImage: the image to check
-        label: specifies label to store the neighbor list (e.g. "soma")
+        label: specifies label to store the neighbor list (e.g. "soma_test")
         max_dist: how far to search for neighbors
         exclude: label to exclude, does not exclude if None
 
@@ -127,16 +127,16 @@ class Process(Segment):
     """
     def get_rnadistances(self, source):
         """
-        Get the distance of each RNA in the region from the source pixel
+        Get the distance of each rna in the region from the source pixel
         Calculates distance along the segment, not euclidean distance
 
         ---Arguments---
         source: pixel within segment to check
 
         ---Returns---
-        list of distances of each RNA in segment
+        list of distances of each rna in segment
         """
-        # using region properties get the distance of each pixel inthe RNA
+        # using region properties get the distance of each pixel inthe rna
         disgraph = self.region.make_disgraph(source)
         self.dis = disgraph
         return disgraph[self.rna_px[:,0]-self.ymin,self.rna_px[:,1]-self.xmin]
@@ -235,7 +235,7 @@ class JoinedSegments:
 
 class Root(JoinedSegments):
     """
-    The root of a joined segment. Contains a soma
+    The root of a joined segment. Contains a soma_test
     """
     def __init__(self, soma:Soma):
 
@@ -275,7 +275,7 @@ class Root(JoinedSegments):
 
 class Branch(JoinedSegments):
     """
-    A JoinedSegment with a process at the end.
+    A JoinedSegment with a process_test at the end.
     Builds off another JoinedSegment
     """
 
@@ -299,7 +299,7 @@ class Branch(JoinedSegments):
         Determine the length of the branch recursively
 
         ---Returns---
-        self.start_length: the length of the shortest path from the soma to the
+        self.start_length: the length of the shortest path from the soma_test to the
             nearest pixel in self.end
         self.disImg: disIm calculated from the nearest pixel in self.end as
             the source
@@ -323,16 +323,16 @@ class Branch(JoinedSegments):
 
     def get_rnadistances(self, fetch=True):
         """
-        Determine the distance of each RNA from the soma recursively
+        Determine the distance of each rna from the soma_test recursively
 
         ---Arguments---
         fetch: whether to return values
 
         ---Returns---
-        rnaids: the ids of all RNA along the branch
-        rnadists: the distances of each RNA from the soma
+        rnaids: the ids of all rna along the branch
+        rnadists: the distances of each rna from the soma_test
         """
-        # get RNA distribution up to here
+        # get rna distribution up to here
         all_rna, all_rna_dists = self.source.get_rnadistances()
 
         # using closest pt to source calc rna distances and fetch rnaids

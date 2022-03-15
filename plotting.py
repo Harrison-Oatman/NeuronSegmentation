@@ -2,72 +2,23 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.patches as patches
 import matplotlib as mpl
+from colors import *
+
 
 """
-Generating Color Maps
+CONFIG STUFF
 """
 
-def hextorgb(h):
-    """
-    converts hexidecimal string to RGB
-    """
-    h = h.lstrip('#')
-    r = int(h[:2],16)
-    g = int(h[2:4],16)
-    b = int(h[4:],16)
-    return r/255., g/255., b/255.
+PARAMS = {"dir" : None}
 
-def seqfromhexes(points, hs, name='CustomMap'):
-    """
-    create LinearSegmentedColormap
-
-    ---Arguments---
-    points: locations of color changes
-    hs: hexidecimal codes before and after the points (length 2*number of poitns)
-    """
-    cdict = {'red': [], 'green': [], 'blue': []}
-    for i, point in enumerate(points):
-        for j,col in enumerate(['red','green','blue']):
-            c1 = hextorgb(hs[2*i])[j]
-            c2 = hextorgb(hs[2*i+1])[j]
-            cdict[col].append((point, c1, c2))
-    return LinearSegmentedColormap(name, cdict)
+def set_dir(path):
+    PARAMS["dir"] = path
 
 """
-some colors and color maps
+UTILS
 """
-
-ss = '#e6eceb'
-
-default = { "bg" : "#F7F7F7",
-        "ax" : "#2E2E2E",
-        "c1" : "#41B8A6",
-        "c2" : "#B84153",
-        "c3" : "#f8a68c"}
-
-dark = { "bg" : "#102e2a",
-        "ax" : "#cf7c87",
-        "c1" : "#b4cfcb",
-        "c2" : "#cf7c87",
-        "c3" : "#f8a68c"}
-#d3e2e0
-light = { "bg" : "#ffd8cc",
-        "ax" : "#5c2e35",
-        "c1" : "#102e2a",
-        "c2" : "#5c2e35",
-        "c3" : "#f8a68c"}
-
-gDefault = seqfromhexes([0.0, 0.0001,1.0],[default['bg'],default['bg'],default['bg'],default['c2'],default['c3'],default['c3']])
-bgDark = seqfromhexes([0.0, 0.0001,1.0],[dark['bg'],dark['bg'],dark['bg'],dark['c2'],dark['c3'],dark['c3']])
-bgLight = seqfromhexes([0.0, 0.0001,1.0],[light['bg'],light['bg'],light['bg'],light['c2'],light['c3'],light['c3']])
-
-gradDark = seqfromhexes([0.0, 0.5,1.0],[dark['bg'],dark['bg'],dark['c2'],dark['c2'],dark['c3'],dark['c3']])
-gradLight = seqfromhexes([0.0, 0.5,1.0],[light['bg'],light['bg'],light['c2'],light['c2'],light['c3'],light['c3']])
-
-skLight = seqfromhexes([0.0, 0.001,1.0],[light['bg'],light['bg'],light['bg'],light['ax'],light['ax'],light['ax']])
 
 def subplotColored(figsize=(10,10),theme=default,nrows=1,ncols=1):
     # set colors by theme
@@ -83,14 +34,20 @@ def subplotColored(figsize=(10,10),theme=default,nrows=1,ncols=1):
 
     return plt.subplots(figsize=figsize,nrows=nrows,ncols=ncols)
 
+
+def panel(image, bbox, i):
+    return image[bbox[i][0]:bbox[i][0] + bbox[i][2], bbox[i][1]:bbox[i][1] + bbox[i][3]]
+
 """
 KDE plots
 """
+
 
 def plotKDE(values, title, bw_method = 0.1,
              xlabel = "value", ylabel = "kernel density estimate",
              show = True, savefile = None,figsize=(11,9)):
     return plotKDEs([values], title, None, bw_method, xlabel, ylabel, show, savefile, figsize)
+
 
 def plotKDEs(valuesList, title, labels = None, bw_methods = 0.1,
              xlabel = "value", ylabel = "kernel density estimate",
@@ -128,11 +85,25 @@ def plotKDEs(valuesList, title, labels = None, bw_methods = 0.1,
 
     return f, ax
 
+
 """
 Image Plotting
 """
 
-def implot(image, dir=None, name = "temp", cmap=bgLight, buffer=None,
+
+def colorplot(image, cdict, name="temp", show=True, figsize=(10,10), interpolation='antialiased',
+              axes=False, title=None):
+    """
+    plotting of an image which allows for a custom color dictionary 'cdict'
+    """
+    cmap = seqfromdict(cdict, "color_plot")
+    image[0, 0] = np.max(list(cdict.keys()))
+
+    return single_image(image, name=name, cmap=cmap, show=show, figsize=figsize, interpolation=interpolation,
+                        axes=axes, title=title)
+
+
+def implot(image, name = "temp", cmap=bgLight,
            show=True, figsize=(10,10),interpolation='antialiased',
            theme=default, axes=False, title=None,alpha=1.0,vmax=None):
     """
@@ -140,39 +111,60 @@ def implot(image, dir=None, name = "temp", cmap=bgLight, buffer=None,
     """
     plotImage = image.copy()
 
-    # determine max value
-    if vmax is None:
-        vmax = np.max(plotImage)
-
     # set colors by theme
-    mpl.rc('axes',edgecolor=theme['ax'])
-    mpl.rc('text',color=theme['ax'])
-    mpl.rc('xtick',color=theme['ax'])
-    mpl.rc('ytick',color=theme['ax'])
-    mpl.rc('text',color=theme['ax'])
-    mpl.rc('figure',facecolor=ss)
-    mpl.rc('savefig',facecolor=ss)
+
+    mpl.rc('figure',facecolor=[0,0,0,0])
+    mpl.rc('savefig',facecolor=[0,0,0,0])
+
+    return single_image(image, name, cmap, show, figsize, interpolation, axes, title, alpha)
 
 
-    fig, ax1 = plt.subplots(figsize=figsize)
+def single_image(image, name = "temp", cmap=bgLight,
+           show=True, figsize=(10,10),interpolation='antialiased',
+           axes=False, title=None, alpha=1.0):
+    """
+    Plots, titles, and saves a single image
+    """
+    fig, ax = plt.subplots(figsize=figsize, constrained_layout=True)
+    ax.margins(0.01)
 
     if title is not None:
         fig.suptitle(title, fontsize=25)
 
-    ax1.tick_params(left=axes,
-                    bottom=axes,
-                    labelbottom=axes,
-                    labelleft=axes)
+    axplot(image, ax, cmap, interpolation, alpha, axes)
 
-    ax1.imshow(plotImage,cmap=cmap, vmax=vmax, interpolation=interpolation,alpha=alpha)
-
-    if dir is not None:
-        plt.savefig(dir + name + ".png")
+    if PARAMS["dir"] is not None:
+        plt.savefig(PARAMS["dir"] + name + ".png")
 
     if show:
         plt.show()
 
-    return fig, ax1
+    return fig, ax
+
+
+def axplot(image, ax, cmap=bgLight, interpolation='antialiased', alpha=1.0, axes=False, vmax=None):
+
+    # determine max value
+    if vmax is None:
+        vmax = np.max(image)
+
+    ax.tick_params(left=axes,
+                    bottom=axes,
+                    labelbottom=axes,
+                    labelleft=axes)
+
+    ax.imshow(image, cmap=cmap, vmax=vmax, interpolation=interpolation, alpha=alpha)
+
+
+def permute_image(image):
+    nonzeros = np.unique(image)
+    nonzeros = nonzeros[nonzeros != 0]
+    permutation = np.random.permutation(nonzeros)
+    newImage = np.zeros(image.shape)
+    for aid, bid in enumerate(permutation):
+        newImage[image==nonzeros[aid]] = bid
+    return newImage
+
 
 def embedimg(image, bbs, dir=None, name = "temp", cmap=bgLight, buffer=None,
            show=True, width=10,interpolation='antialiased',
@@ -199,7 +191,7 @@ def embedimg(image, bbs, dir=None, name = "temp", cmap=bgLight, buffer=None,
     mpl.rc('figure',facecolor=ss)
     mpl.rc('savefig',facecolor=ss)
     # mpl.rc('figure',dpi=200)
-    mpl.rc('savefig',dpi=200)
+    # mpl.rc('savefig',dpi=200)
 
     n = len(bbs)
 
@@ -247,9 +239,11 @@ def embedimg(image, bbs, dir=None, name = "temp", cmap=bgLight, buffer=None,
 
     return fig, main, axes
 
+
 """
 Point plotting
 """
+
 
 def embedscattercolor(im,xs,ys,c,bbs,s=1,cmap='gist_earth'):
     """
@@ -277,20 +271,21 @@ def embedscattercolor(im,xs,ys,c,bbs,s=1,cmap='gist_earth'):
 
     plt.show()
 
-def embedscattercolornoseries(im,xs,ys,c,bbs,s=1,cmap='gist_earth'):
+
+def embedscattercolornoseries(im, xs, ys, c, bbs, s=1,cmap='gist_earth'):
     """
     embed scatter color with a single color
     """
     fig, main, axes = embedimg(im,bbs,show=False,name='Endpoints',cmap=skLight)
 
-    main.scatter(xs,ys,s=s,c=c)
+    main.scatter(xs, ys, s=s, c=c)
 
     for i, ax in enumerate(axes):
         ysi = []
         xsi = []
         for j in range(len(ys)):
-            if ys[j] > bbs[i][0] and ys[j] < bbs[i][0] + bbs[i][2]:
-                if xs[j] > bbs[i][1] and xs[j] < bbs[i][1] + bbs[i][3]:
+            if bbs[i][0] < ys[j] < bbs[i][0] + bbs[i][2]:
+                if bbs[i][1] < xs[j] < bbs[i][1] + bbs[i][3]:
                     # print('ere')
                     ysi.append(ys[j])
                     xsi.append(xs[j])
@@ -300,7 +295,8 @@ def embedscattercolornoseries(im,xs,ys,c,bbs,s=1,cmap='gist_earth'):
 
     plt.show()
 
-def embedscatter(im,xs,ys,bbs,c=None,s=1,cmap='gist_earth'):
+
+def embedscatter(im, xs, ys, bbs, c=None, s=1, cmap='gist_earth'):
     if c is None:
         c = "k"
     if len(c) == 1:

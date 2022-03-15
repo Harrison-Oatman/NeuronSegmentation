@@ -192,7 +192,7 @@ class Qtree:
             for child in self.children:
                 child.draw(ax, bbox, c, lw)
 
-    def circle_query(self, bbox, center, radius2, found, tester=None, getter=Getter()):
+    def circle_query(self, bbox, center, radius2, found, tester=None, getter=None):
         if not self.rect.intersects(bbox):
             return
 
@@ -211,6 +211,8 @@ class Qtree:
                 child.circle_query(bbox, center, radius2, found, tester, getter)
 
     def radius_query(self, center, radius, tester=None, getter=None):
+        if getter is None:
+            getter = Getter()
         bbox = Rect([center[0]-radius, center[1]-radius, radius*2, radius*2])
         radius2 = radius**2
         found = []
@@ -244,11 +246,26 @@ class Qtree:
 def convert_to_qtree(rna_dataframe, bbox, limit=10):
     qtree = Qtree(bbox, limit)
     rna_list = []
+    global_z = True if 'global_z' in rna_dataframe.columns else False
+    cell_index = True if 'cell_index' in rna_dataframe.columns else False
+    soma_distance = True if 'distance2Center' in rna_dataframe.columns else False
+
     for index, row in tqdm(rna_dataframe.iterrows()):
-        z = row['global_z'] if 'global_z' in rna_dataframe.columns else 0
-        cell = row['cell_index'] if 'cell_index' in rna_dataframe.columns else 0
+        z = row['global_z'] if global_z else 0
+        cell = row['cell_index'] if cell_index else 0
+        distance = row['distance2Center'] if soma_distance else 0
         point = Rna(row['global_y'], row['global_x'], z, int(row['barcode_id']),
-                    index, cell=cell, processIndex=row['process_index'])
+                    index, cell=cell, processIndex=row['process_index'], somaDistance=distance)
         qtree.add_rna(point)
         rna_list.append(point)
     return qtree, rna_list
+
+
+def generate_barcode_qtrees(rna_list, bbox, n_rna=1240, limit=10):
+    barcode_qtrees = {i: Qtree(bbox, limit) for i in range(n_rna)}
+    barcode_rna_lists = {i: [] for i in range(n_rna)}
+    for i, point in tqdm(enumerate(rna_list)):
+        barcode_qtrees[point.barcode].add_rna(point)
+        barcode_rna_lists[point.barcode].append(point)
+
+    return barcode_qtrees, barcode_rna_lists

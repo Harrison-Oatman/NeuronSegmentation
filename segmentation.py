@@ -153,7 +153,7 @@ def merge_pts(pts, r):
 
     for i, j in zip(iis,jjs):
         if i < j:
-            newpt = np.floor(np.mean(pts[[i,j],:],axis=0)).astype(pts.dtype)
+            newpt = np.floor(np.mean(pts[[i,j],:], axis=0)).astype(pts.dtype)
             rmids.add(i)
             rmids.add(j)
             if merge_pts is not None:
@@ -194,7 +194,10 @@ def get_crossing_mask(img, cps):
     mask = np.zeros(img.shape)
     n, m = img.shape
     for cpy, cpx in cps:
-        for r in range(3,200,1):
+        if iimg[cpy, cpx] > 0:
+            continue
+
+        for r in range(3,20,1):
             # get bounds for square around crossing point
             ymin = max(0,cpy-r)
             xmin = max(0,cpx-r)
@@ -206,15 +209,15 @@ def get_crossing_mask(img, cps):
             y = cpy - ymin
             x = cpx - xmin
 
-            # label space, locating each region of the background
-            """
-            I need to print space or else this function breaks wtf???
-            """
             space = space + 0
             ls = label(space)
-
+            props = regionprops(ls)
             # since this is a crossing point, we should have four background regions
-            if len(regionprops(ls)) == 4:
+            if 4 <= len(props) <= 5:
+
+                areas = [props[i].area > 5 for i in range(len(props))]
+                if sum(areas) < 4:
+                    continue
 
                 # calculate distance of each point to crossing point
                 yy, xx = np.meshgrid(np.arange(space.shape[1]), np.arange(space.shape[0]))
@@ -226,7 +229,7 @@ def get_crossing_mask(img, cps):
                 nearpts = None
 
                 # go through each background region
-                for lab in range(1,5):
+                for lab in range(1, np.max(ls) + 1):
 
                     # create a mask so the only contenders are in the region
                     pmask = darr.copy()
@@ -334,7 +337,7 @@ def break_down(image):
     sep, sbp, scp = find_endpts(sampleskel)
 
 
-    a,b = cross_close_branches(sbp, scp, 8)
+    a,b = cross_close_branches(sbp, scp, 12)
 
 
     samplemask = get_crossing_mask(image, nby2_convert(b))

@@ -12,13 +12,14 @@ class Rna:
     barcode: int
     id: int  # id which may be used to reference this Rna in other contexts
 
-    cell: int = 0  # the label for the cell the RNA belongs to
-    processIndex: int = 0  # index used to specify process within cell
+    somaDistance: float = 0
+    cell: int = 0  # the label for the cell_test the rna belongs to
+    processIndex: int = 0  # index used to specify process_test within cell_test
 
 
 class Colorizer(ABC):
     """
-    Takes an RNA and returns a point
+    Takes an rna and returns a point
     """
     @abstractmethod
     def get_color(self, pt):
@@ -27,7 +28,7 @@ class Colorizer(ABC):
 
 class ColorByCell(Colorizer):
     def get_color(self, point):
-        return point.cell
+        return point.cell_test
 
 
 class ColorByBarcode(Colorizer):
@@ -37,7 +38,7 @@ class ColorByBarcode(Colorizer):
 
 def plot_points(ax, points, c='r', s=1, colorizer: Colorizer = None, offset=(0, 0), image=None, **kwargs):
     """
-    This function is used for plotting a list of RNA. We can specify a list of colors
+    This function is used for plotting a list of rna. We can specify a list of colors
     using c, or send in a colorizer with the function get_color which return
     """
     ys = [point.y - offset[0] for point in points]

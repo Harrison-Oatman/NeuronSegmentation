@@ -3,13 +3,13 @@ from trees import Qtree
 
 """
 This file contains objects and methods which are used to generate groups
-of RNA by some method of addition
+of rna by some method of addition
 """
 
 
 class SearchMethod(ABC):
     """
-    A SearchMethod adds new RNA to the horizon
+    A SearchMethod adds new rna to the horizon
     """
     @abstractmethod
     def search(self, pt) -> list:
@@ -27,6 +27,24 @@ class NearestNeighborSearch(SearchMethod):
 
     def search(self, pt) -> list:
         return self.tree.get_nn(pt, self.k, self.max_dist)
+
+
+class RadiusSearch(SearchMethod):
+    """
+    This simple search finds the nearest neighbors to a point on a Tree
+    """
+    def __init__(self, tree: Qtree, max_dist):
+        self.tree = tree
+        self.max_dist = max_dist
+        self.square = max_dist**2
+
+    def search(self, pt) -> list:
+        candidates = self.tree.radius_query((pt.y, pt.x), self.max_dist)
+        finals = []
+        for other in candidates:
+            if ((other.y - pt.y)**2 + (other.x - pt.x)**2 + (5*(other.z - pt.z))**2) < self.square:
+                finals.append(other)
+        return finals
 
 
 class AddMethod:

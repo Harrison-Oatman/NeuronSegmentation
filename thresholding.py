@@ -9,7 +9,7 @@ Dendrite Extraction
 """
 def threshold_dendrites(im):
 
-    hi = 0.7
+    hi = 0.60
     lo = 0.25
     closerad = 8
     dilrad = 5
@@ -86,6 +86,7 @@ def threshold_soma(im):
     hi = 0.9
     lo = 0.1
     dilrad = 8
+    holemin = 50
 
     dilfilter = disk(dilrad)
 
@@ -104,6 +105,8 @@ def threshold_soma(im):
 
     # final segmentation is intersection
     b = np.bitwise_and(hiso>0,loso>0)
+
+    b = morphology.remove_small_holes(b > 0, holemin)
 
     return b
 
