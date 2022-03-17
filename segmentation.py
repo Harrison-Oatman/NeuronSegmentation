@@ -193,6 +193,9 @@ def get_crossing_mask(img, cps):
 
     mask = np.zeros(img.shape)
     n, m = img.shape
+
+    involved = []
+
     for cpy, cpx in cps:
         if iimg[cpy, cpx] > 0:
             continue
@@ -249,14 +252,22 @@ def get_crossing_mask(img, cps):
                 cpmask[cpmask>0] = 1
                 # implot(cpmask)
 
+                nearby = np.argwhere(np.bitwise_and((sq_kernel(cpmask, 1) > 0.), cpmask == 0))
+                # print(len(nearby))
+                nearby[:, 0] += ymin
+                nearby[:, 1] += xmin
+                involved.append(nearby)
+
                 mask[ymin:ymax,:][:,xmin:xmax] += cpmask
+
+
 
                 break
     # implot(mask)
     # implot(img-mask > 0,interpolation='nearest')
     # print(np.unique(img-mask))
 
-    return mask
+    return mask, involved
 
 def get_branch_mask(img, bps):
     iimg = img.copy()
@@ -265,6 +276,9 @@ def get_branch_mask(img, bps):
 
     mask = np.zeros(img.shape)
     n, m = img.shape
+
+    involved = []
+
     for bpy, bpx in bps:
         for r in range(2,80,1):
             # get bounds for square around crossing point
@@ -306,7 +320,18 @@ def get_branch_mask(img, bps):
                     bpmask[closey,closex] = 1
 
                     bpmask = convex_hull_image(bpmask)
+
                     mask[ymin:ymax,:][:,xmin:xmax] += bpmask
+
+                    # print(f'bpmask{bpmask}')
+                    # print(f'kernel{sq_kernel(bpmask, 1)}')
+                    # print(f'zeros{bpmask==0}')
+                    # print(f'all{np.sum(np.bitwise_and((sq_kernel(bpmask, 1) > 0.), bpmask == 0))}')
+                    nearby = np.argwhere(np.bitwise_and((sq_kernel(bpmask, 1) > 0.), bpmask == 0))
+                    # print(len(nearby))
+                    nearby[:,0] += ymin
+                    nearby[:,1] += xmin
+                    involved.append(nearby)
 
                 break
     mask[mask > 0] = 1
@@ -314,7 +339,7 @@ def get_branch_mask(img, bps):
     # implot(img-mask > 0,interpolation='nearest')
     # print(np.unique(img-mask))
 
-    return mask
+    return mask, involved
 
 def trim_skel(skel, min_length=5):
     shorties = rm_nubs(skel, min_length)
@@ -336,16 +361,15 @@ def break_down(image):
 
     sep, sbp, scp = find_endpts(sampleskel)
 
-
     a,b = cross_close_branches(sbp, scp, 12)
 
-
-    samplemask = get_crossing_mask(image, nby2_convert(b))
-    samplemask += get_branch_mask(image, nby2_convert(a))
+    samplemask, cp_involves = get_crossing_mask(image, nby2_convert(b))
+    branch_mask,  bp_involves = get_branch_mask(image, nby2_convert(a))
+    samplemask += branch_mask
     samplemask[samplemask > 0] = 1
 
     segmentedsampleimage = image - samplemask
     segmentedsampleimage[segmentedsampleimage<1] = 0
     segmentedsampleimage[segmentedsampleimage>=1] = 1
 
-    return segmentedsampleimage, sampleskel
+    return segmentedsampleimage, sampleskel, cp_involves, bp_involves

@@ -14,6 +14,7 @@ def getBoundaries(datapath):
     # create arrays to story body and process locations
     bodyImage = np.zeros((width, height),dtype=np.int32)
     processImage = np.zeros((width, height),dtype=np.int32)
+    cellImage = np.zeros((width, height), dtype=np.int32)
 
     # track names to determine parent relationships
     processNames = ["0.0"]
@@ -47,12 +48,13 @@ def getBoundaries(datapath):
             # fill in polygon boundary of each process
             points = np.array(list(zip(processBoundary[0,bb][:,0],processBoundary[0,bb][:,1])),dtype=np.int32)
             cv.fillPoly(processImage, [points], processCount,)
+            cv.fillPoly(cellImage, [points], bodyCount)
             # give each process a unique name
             processNames.append(str(bodyCount) + "." + str(names[bb]))
 
         # fill in polygon boundary of each body
         points = np.array(list(zip(bodyBoundary[:,0],bodyBoundary[:,1])),dtype=np.int32)
         cv.fillPoly(bodyImage, [points], bodyCount)
+        cv.fillPoly(cellImage, [points], bodyCount)
 
-
-    return bodyImage, processImage, processNames
+    return bodyImage, processImage, processNames, cellImage

@@ -48,18 +48,18 @@ processImageFile = datapath + "processImage.npy"
 somaImageFile = datapath + "somaImage.npy"
 
 try:
-    print("loading process, soma images")
     processImage = np.load(processImageFile)
     somaImage = np.load(somaImageFile)
     thresholdedProcessImage = np.load(datapath + "thresholdedProcessImage.npy")
     brokenProcessImage = np.load(datapath + "brokenProcessImage.npy")
     cleanedProcessImage = np.load(datapath + "cleanedProcessImage.npy")
     thresholdedSomaImage = np.load(datapath + "thresholdedSomaImage.npy")
+    cp_involved = np.load(datapath + "cp_involved.npy", allow_pickle=True)
+    bp_involved = np.load(datapath + "bp_involved.npy", allow_pickle=True)
 
     newThreshold = False
 
 except OSError:
-    print("some images not found, rebuilding")
     imname = 'preprocessed_Probabilities.png'
 
     datafile = datapath + imname
@@ -68,7 +68,7 @@ except OSError:
     print("thresholding image")
     thresholdedProcessImage, thresholdedSomaImage = thresholding.threshold_img(segProbIm)
     print("breaking down image")
-    brokenProcessImage, togetherskel = segmentation.break_down(thresholdedProcessImage)
+    brokenProcessImage, togetherskel, cp_involved, bp_involved = segmentation.break_down(thresholdedProcessImage)
 
     cleanedProcessImage = morphology.remove_small_objects(brokenProcessImage>0,min_size=10,connectivity=1)
     cleanedSomaImage = morphology.remove_small_objects(thresholdedSomaImage>0,min_size=25,connectivity=1)
@@ -76,6 +76,8 @@ except OSError:
     processImage = label(cleanedProcessImage,connectivity=1)
     somaImage = label(cleanedSomaImage,connectivity=2)
 
+    save(cp_involved, "cp_involved", datapath)
+    save(bp_involved, "bp_involved", datapath)
     save(thresholdedProcessImage, "thresholdedProcessImage", datapath)
     save(brokenProcessImage, "brokenProcessImage", datapath)
     save(cleanedProcessImage, "cleanedProcessImage", datapath)
@@ -98,8 +100,7 @@ try:
         raise OSError()
 
 except OSError:
-    print("running assignment algorithm")
-    assignments, process_labels, cell_image, new_rna = assignment.start_to_end(processImage, somaImage, RNA)
+    assignments, process_labels, cell_image, new_rna = assignment.start_to_end(processImage, somaImage, cp_involved, bp_involved, RNA)
     cellImage = np.array(cell_image,dtype=np.int)
     permuted_cell_image = plotting.permute_image(cellImage)
     np.save(datapath+"assignments.npy", assignments)
@@ -114,7 +115,7 @@ alg_master_accuracy = metrics.accuracy_set(ab_a, ab_b)
 
 print("getting human labeled boundaries")
 
-humanBodyImage, humanProcessImage, processNames = boundaries.getBoundaries(datapath)
+humanBodyImage, humanProcessImage, processNames, humanCellImage = boundaries.getBoundaries(datapath)
 
 preprocessed = np.array(cv2.imread(datapath+"Preprocessed.png"))
 preprocessed = np.dstack((preprocessed[:, :, 2], preprocessed[:, :, :2]))
