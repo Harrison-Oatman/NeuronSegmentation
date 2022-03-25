@@ -95,7 +95,7 @@ def rm_nubs(skel, min_length = 10):
     m = min_length
 
     # pad zeros to newskel for function use
-    newskel = np.pad(skel, 1)
+    newskel = np.pad(skel, 1, 'edge')
     newskel[newskel > 0] = 1
 
     # find location of endpts, splits, crosses

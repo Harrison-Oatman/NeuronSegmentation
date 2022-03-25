@@ -1,5 +1,5 @@
 import numpy as np
-
+from tqdm import tqdm
 import distance_calc
 import roots_calc
 import crossing_calc
@@ -41,7 +41,12 @@ def hierarchy_join(assigned, unassigned, cost_mat, assignments=None, levelfn=lin
         assignments = [i for i in range(cost_mat.shape[0])]
         levels = np.array([0 for i in range(cost_mat.shape[0])])
 
+    t = tqdm(total=len(unassigned), desc="joining segments")
+
     while len(unassigned) > 0:
+
+        t.update(1)
+
         # take submatrix of possible pairings
         subMat = cost_mat[assigned, :]
         subMat = subMat[:, unassigned]
@@ -64,6 +69,8 @@ def hierarchy_join(assigned, unassigned, cost_mat, assignments=None, levelfn=lin
 
         # sort assigned array
         assigned = np.sort(assigned)
+
+    t.close()
 
     return assignments
 

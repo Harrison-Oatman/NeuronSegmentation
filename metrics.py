@@ -135,7 +135,10 @@ def cell_accuracy(rna_a, rna_b, first=process, second=soma, n=10 ** 5):
     """
     # pick a random id from first list, and pick random id from corresponding cell in second list
     first_ids = np.random.choice(np.arange(len(first_cells_a)),size=n)
-    second_ids = [np.random.choice(second_pools[i]) for i in first_cells_a[first_ids]]
+    second_ids = [np.random.choice(second_pools[i]) if len(second_pools[i]) > 0 else -1 for i in first_cells_a[first_ids]]
+
+    first_ids = [first_ids[i] for i in range(len(second_ids)) if second_ids[i] >= 0 ]
+    second_ids = [second_ids[i] for i in range(len(second_ids)) if second_ids[i] >= 0]
 
     """
     Now we determine the process index of each of those rna according to a (the ground truth)

@@ -28,14 +28,29 @@ from collections import Counter
 from tqdm import tqdm
 
 parent_directory = os.path.split(file.current_directory)[0]
-datapath = parent_directory + "\\training\\0520\\"
-datapath_two = parent_directory + "\\training\\0605\\"
+
+validation = False
+
+if validation:
+    bbox = [[700, 700, 500, 500], [2600, 2700, 600, 600]]
+    datapath = parent_directory + "\\training\\0225\\"
+    datapath_two = parent_directory + "\\training\\0520\\"
+    RNA = pd.read_csv(datapath + "barcodes.csv")
+    RNA_two = pd.read_csv(datapath_two + "barcodes_p5_cellCenterDistance.csv")
+    human_a = pd.read_csv(datapath + "190225_Kobe1stTraining.csv")
+    human_b = pd.read_csv(datapath + "190225_TJS1stTraining.csv")
+else:
+    bbox = [[700, 700, 500, 500], [2600, 2700, 600, 600]]
+    datapath = parent_directory + "\\training\\0520\\"
+    datapath_two = parent_directory + "\\training\\0225\\"
+    RNA = pd.read_csv(datapath + "barcodes_p5_cellCenterDistance.csv")
+    RNA_two = pd.read_csv(datapath_two + "barcodes.csv")
+
+
 plotpath = parent_directory + "\\plots\\"
 plotting.set_dir(plotpath)
 
-# RNA = pd.read_csv(datapath + "barcodes.csv")
-RNA = pd.read_csv(datapath + "barcodes_p5_cellCenterDistance.csv")
-RNA_two = pd.read_csv(datapath_two + "barcodes.csv")
+
 
 
 def save(img,name,dir):
@@ -123,7 +138,11 @@ preprocessed[:, :, 1] //= 2
 ilastik = np.array(cv2.imread(datapath+"preprocessed_Probabilities.png"))
 ilastik[:, :, 0] //= 2
 
-bbox = [[700, 700, 500, 500], [2600, 2700, 600, 600]]
+bbox_ymin = bbox[1][0]
+bbox_ymax = bbox[1][0] + bbox[1][2]
+bbox_xmin = bbox[1][1]
+bbox_xmax = bbox[1][1] + bbox[1][3]
+
 # plotting.embedimg(preprocessed, bbox, dir=plotpath, name="preprocessed_embed")
 two_map = {0 : '#EDF3FA',
         1 : '#2F5061',
@@ -149,6 +168,10 @@ diverge = {0 : '#EDF3FA',
 two_blue = {0 : '#F5FAFF',
         2 : '#2F5061',
         1 : '#2790C4',
+        }
+
+darktheme = {0 : '#182D43',
+        1 : '#CFECFA',
         }
 
 two_orange = {0 : '#F5FAFF',
