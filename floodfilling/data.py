@@ -1,9 +1,14 @@
+import os
+import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io as sio
 import cv2 as cv
+import pandas as pd
+from skimage.measure import regionprops
 
-def getBoundaries(datapath):
+
+def get_boundaries(datapath):
 
     # get size of immunofluorescence image
     combined_if_image = plt.imread(datapath+"Map2TauImage.png")
@@ -58,3 +63,36 @@ def getBoundaries(datapath):
         cv.fillPoly(cell_image, [points], body_count)
 
     return body_image, process_image, process_names, cell_image
+
+
+def write_training_source_folder(src_dir, dst_dir):
+    if not os.path.isdir(dst_dir):
+        os.mkdir(dst_dir)
+
+    for file in ["Map2TauImage.png", "barcodes.csv"]:
+        shutil.copy2(src_dir+file, dst_dir+file)
+
+    # get boundary image
+    body_image, process_image, process_names, cell_image = get_boundaries(src_dir)
+    np.save(dst_dir + "cell_image", cell_image)
+
+    centroids = {"cell_id": [],
+                 "soma_centroid_y": [],
+                 "soma_centroid_x": []}
+
+    for region in regionprops(body_image):
+        centroids["cell_id"].append(region.label)
+        centroids["soma_centroid_y"].append(region.centroid[0])
+        centroids["soma_centroid_x"].append(region.centroid[1])
+
+    centroids_df = pd.DataFrame(centroids)
+    centroids_df.to_csv(dst+"centroids.csv")
+
+
+n = "0520"
+
+src = f"C:\\Lab Work\\segmentation\\training\\{n}\\"
+dst = f"C:\\Lab Work\\segmentation\\floodfilling_data\\{n}\\"
+
+write_training_source_folder(src, dst)
+
