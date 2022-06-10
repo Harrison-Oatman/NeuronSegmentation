@@ -37,7 +37,7 @@ class Example:
 
 
 def write_json_examples(path, examples):
-    json_string = json.dumps([asdict(example) for example in examples], indent=2)
+    json_string = json.dumps([asdict(examples[i]) for i in examples], indent=2)
     with open(path, "w") as f:
         f.write(json_string)
 
@@ -91,7 +91,7 @@ def make_examples_from_dataset(src_dir, trn_dir=const.TRAINING_DIR, overwrite=Fa
     if_image = np.array(cv2.imread(src_dir + "Map2TauImage.png"))
     centroids = pd.read_csv(src_dir + "centroids.csv")
 
-    examples = []
+    examples = {}
     json_path = trn_dir + "examples.json"
 
     source = src_dir[-4:]
@@ -99,13 +99,12 @@ def make_examples_from_dataset(src_dir, trn_dir=const.TRAINING_DIR, overwrite=Fa
     if os.path.exists(json_path):
         if not overwrite:
             examples = load_json_examples(json_path)
-            if source in [example.source for example in examples]:
+            if source in [example.source for example in examples.values()]:
                 print("dataset already parsed, returning...")
                 return
 
     if not os.path.isdir(trn_dir + "if_images"):
         os.mkdir(trn_dir + "if_images")
-
 
     if not os.path.isdir(trn_dir + "segmentations"):
         os.mkdir(trn_dir + "segmentations")
@@ -113,7 +112,7 @@ def make_examples_from_dataset(src_dir, trn_dir=const.TRAINING_DIR, overwrite=Fa
     for i, point in centroids.iterrows():
         new_id = 0
         if len(examples) > 0:
-            new_id = max(example.id for example in examples) + 1
+            new_id = max(example_id for example_id in examples) + 1
 
         centroid = (int(np.floor(point.soma_centroid_y)), int(np.floor(point.soma_centroid_x)))
 
@@ -122,17 +121,17 @@ def make_examples_from_dataset(src_dir, trn_dir=const.TRAINING_DIR, overwrite=Fa
             continue
 
         label_path, cropped_label = make_label(cell_image, centroid,
-                                              trn_dir, new_id, int(point.cell_id))
+                                               trn_dir, new_id, int(point.cell_id))
 
         density = np.average(cropped_label >= 0)
 
-        input = ExampleInput(if_path)
+        input_ = ExampleInput(if_path)
         label = ExampleLabel(label_path)
         properties = ExampleProperties(density)
 
-        example = Example(new_id, source, input, label, properties)
+        example = Example(new_id, source, input_, label, properties)
 
-        examples.append(example)
+        examples[new_id] = example
 
     write_json_examples(json_path, examples)
 
@@ -149,7 +148,7 @@ def main():
 
     examples = load_json_examples(const.TRAINING_DIR+"examples.json")
     plt.imshow(np.load(examples[0].input.image))
-    # plt.show()
+    plt.show()
 
 if __name__ == '__main__':
     main()
