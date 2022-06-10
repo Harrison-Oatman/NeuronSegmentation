@@ -1,3 +1,3 @@
-from floodfilling.utils import example
+from floodfilling.utils import sampling
 
 example.main()

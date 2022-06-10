@@ -10,28 +10,28 @@ from .masking import crop
 
 
 @dataclass
-class ExampleInput:
+class SampleInput:
     image: str = None  # filepath of IF image
     rna: str = None  # filepath of RNA csv
 
 
 @dataclass
-class ExampleLabel:
+class SampleLabel:
     segmentation: str = None  # filepath of cell segmentation
 
 
 @dataclass
-class ExampleProperties:
+class SampleProperties:
     density: float = 0  # percent of labeled pixels (any cell) in local region
 
 
 @dataclass
-class Example:
+class Sample:
     id: int  # unique id of example
     source: str  # name of source dataset e.g. 0603
-    input: ExampleInput  # contains filepaths to input
-    label: ExampleLabel  # contains filepaths to labels
-    properties: ExampleProperties  # contains extra calculated properties
+    input: SampleInput  # contains filepaths to input
+    label: SampleLabel  # contains filepaths to labels
+    properties: SampleProperties  # contains extra calculated properties
     datetime_generated: int = time.time()  # time of generation
     split: str = None  # train, val, test, or None
 
@@ -46,12 +46,12 @@ def load_json_examples(path):
     with open(path, "r") as f:
         json_string = json.loads(f.read())
 
-    examples = {obj['id']: Example(
+    examples = {obj['id']: Sample(
         obj['id'],
         obj['source'],
-        ExampleInput(obj['input']['image'], obj['input']['rna']),
-        ExampleLabel(obj['label']['segmentation']),
-        ExampleProperties(obj['properties']['density']),
+        SampleInput(obj['input']['image'], obj['input']['rna']),
+        SampleLabel(obj['label']['segmentation']),
+        SampleProperties(obj['properties']['density']),
         obj['datetime_generated'],
         obj['split']
     ) for obj in json_string}
@@ -125,11 +125,11 @@ def make_examples_from_dataset(src_dir, trn_dir=const.TRAINING_DIR, overwrite=Fa
 
         density = np.average(cropped_label >= 0)
 
-        input_ = ExampleInput(if_path)
-        label = ExampleLabel(label_path)
-        properties = ExampleProperties(density)
+        input_ = SampleInput(if_path)
+        label = SampleLabel(label_path)
+        properties = SampleProperties(density)
 
-        example = Example(new_id, source, input_, label, properties)
+        example = Sample(new_id, source, input_, label, properties)
 
         examples[new_id] = example
 
@@ -138,7 +138,7 @@ def make_examples_from_dataset(src_dir, trn_dir=const.TRAINING_DIR, overwrite=Fa
 
 def main():
     import matplotlib.pyplot as plt
-    # example_a = Example(0, "src", ExampleInput(), ExampleLabel(), ExampleProperties())
+    # example_a = Sample(0, "src", SampleInput(), SampleLabel(), SampleProperties())
     #
     # write_json_examples("C:\\Lab Work\\segmentation\\floodfilling_data\\0520\\file.json", [example_a])
     # examples = load_json_examples("C:\\Lab Work\\segmentation\\floodfilling_data\\0520\\file.json")
