@@ -147,8 +147,10 @@ def main():
     # print(const.WINDOW_SIZE)
 
     examples = load_json_examples(const.TRAINING_DIR+"examples.json")
+    print(type(examples[0].split))
     plt.imshow(np.load(examples[0].input.image))
     plt.show()
+
 
 if __name__ == '__main__':
     main()
