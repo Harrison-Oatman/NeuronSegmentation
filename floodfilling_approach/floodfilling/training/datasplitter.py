@@ -27,12 +27,12 @@ class Splitter:
             unlabeled_ids = [i for i in self.examples if self.examples[i].split is None]
         n_unlabeled = len(unlabeled_ids)
 
-        to_train = math.floor(n_unlabeled*split) - len(self.train_ids)
+        to_train = math.floor(self.n_examples*split) - len(self.train_ids)
 
         if to_train < 0 or to_train > n_unlabeled:
             print("not enough unlabeled samples to successfully split, try setting"
                   "'overwrite_split_labels' to True")
-            to_train = int(np.clip(to_train, 0, n_unlabeled)[0])
+            to_train = int(np.clip(to_train, 0, n_unlabeled))
 
         np.random.shuffle(unlabeled_ids)
         new_trains = unlabeled_ids[:to_train]
@@ -47,5 +47,5 @@ class Splitter:
         for i in new_vals:
             self.examples[i].split = "val"
 
-        sampling.write_json_examples(train_dir + "example.json", self.examples)
+        sampling.write_json_examples(train_dir + "examples.json", self.examples)
 

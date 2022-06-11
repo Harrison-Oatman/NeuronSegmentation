@@ -1,3 +1,3 @@
-from floodfilling.utils import sampling
+from floodfilling.training import datasplitter
 
-sampling.main()
+a = datasplitter.Splitter()
