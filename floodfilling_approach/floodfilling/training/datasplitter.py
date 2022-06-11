@@ -18,16 +18,16 @@ class Splitter:
         self.examples = sampling.load_json_examples(train_dir+"examples.json")
         self.n_examples = len(self.examples.keys())
         if overwrite_split_labels:
-            self.train_ids = []
-            self.val_ids = []
+            self.split_ids = {x: [] for x in ["train", "val"]}
             unlabeled_ids = [i for i in self.examples]
         else:
-            self.train_ids = [i for i in self.examples if self.examples[i].split == "train"]
-            self.val_ids = [i for i in self.examples if self.examples[i].split == "val"]
+            self.split_ids = {split: [i for i in self.examples if
+                                      self.examples[i].split == split]
+                              for split in ["train", "val"]}
             unlabeled_ids = [i for i in self.examples if self.examples[i].split is None]
         n_unlabeled = len(unlabeled_ids)
 
-        to_train = math.floor(self.n_examples*split) - len(self.train_ids)
+        to_train = math.floor(self.n_examples*split) - len(self.split_ids["train"])
 
         if to_train < 0 or to_train > n_unlabeled:
             print("not enough unlabeled samples to successfully split, try setting"
@@ -38,8 +38,8 @@ class Splitter:
         new_trains = unlabeled_ids[:to_train]
         new_vals = unlabeled_ids[to_train:]
 
-        self.train_ids.extend(new_trains)
-        self.val_ids.extend(new_vals)
+        self.split_ids["train"].extend(new_trains)
+        self.split_ids["val"].extend(new_vals)
 
         for i in new_trains:
             self.examples[i].split = "train"
@@ -49,3 +49,5 @@ class Splitter:
 
         sampling.write_json_examples(train_dir + "examples.json", self.examples)
 
+    def get_samples(self, split):
+        return [self.examples[i] for i in self.split_ids[split]]

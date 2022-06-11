@@ -6,7 +6,7 @@ import cv2
 import pandas as pd
 import os
 from .. import const
-from .masking import crop
+from .cropping import crop
 
 
 @dataclass
@@ -123,7 +123,7 @@ def make_examples_from_dataset(src_dir, trn_dir=const.TRAINING_DIR, overwrite=Fa
         label_path, cropped_label = make_label(cell_image, centroid,
                                                trn_dir, new_id, int(point.cell_id))
 
-        density = np.average(cropped_label >= 0)
+        density = np.average(cropped_label > 0)
 
         input_ = SampleInput(if_path)
         label = SampleLabel(label_path)
@@ -147,7 +147,6 @@ def main():
     # print(const.WINDOW_SIZE)
 
     examples = load_json_examples(const.TRAINING_DIR+"examples.json")
-    print(type(examples[0].split))
     plt.imshow(np.load(examples[0].input.image))
     plt.show()
 
