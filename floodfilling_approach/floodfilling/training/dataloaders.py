@@ -22,8 +22,23 @@ class Batch:
 
         return cropped_inputs, cropped_labels
 
-    def second_pass(self):
-        pass
+    def second_pass(self, offsets):
+
+        inputs = []
+        for i in range(len(self.sample_inputs)):
+            inputs.append(cropping.crop_offset(self.sample_inputs[i:i+1, :],
+                                               offsets[i],
+                                               self.window_shape))
+        cropped_inputs = np.vstack(inputs)
+
+        labels = []
+        for i in range(len(self.sample_labels)):
+            labels.append(cropping.crop_offset(self.sample_labels[i:i + 1, :],
+                                               offsets[i, :],
+                                               self.window_shape))
+        cropped_labels = np.vstack(labels)
+
+        return cropped_inputs, cropped_labels
 
 
 class Dataloader:
