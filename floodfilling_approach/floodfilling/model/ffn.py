@@ -21,6 +21,8 @@ class FFN:
         self.set_up_loss()
         self.moves = self.valid_modes()
 
+        self.accuracy = 0
+
     def set_up_optimizer(self):
         self.optimizer = optimizer.optimizer_from_config()
 
@@ -34,6 +36,10 @@ class FFN:
         next_move = [[12, 0] for _ in inference]
 
         return next_move
+
+    def calc_accuracy(self, inference, labels):
+        self.accuracy = 1 - np.average(np.bitwise_xor(inference > 0, labels > 0.5))
+        return self.accuracy
 
     def valid_modes(self):
         ys = []

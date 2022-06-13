@@ -10,44 +10,88 @@ import matplotlib.pyplot as plt
 class TrainController:
 
     def __init__(self, train_dir=const.TRAINING_DIR, tval_split=const.TRAIN_VAL_SPLIT,
-                 batch_size_train=const.BATCH_SIZE_TRAIN, batch_size_val=const.BATCH_SIZE_VAL):
+                 batch_size_train=const.BATCH_SIZE_TRAIN, batch_size_val=const.BATCH_SIZE_VAL,
+                 first_step_grad=False):
 
         self.splitter = Splitter(train_dir=train_dir, split=tval_split,
                                  overwrite_split_labels=False)
         self.train_loader = Dataloader("train", self.splitter, batch_size=batch_size_train)
         self.val_loader = Dataloader("val", self.splitter, batch_size=batch_size_val)
+        self.first_step_grad = first_step_grad
 
-    def train(self, model: FFN, epochs=20):
+    def train(self, model: FFN, epochs=200):
+
+        def _grad_step(inputs, labels):
+            with tf.GradientTape() as tape:
+                logits = model.net(inputs, training=True)
+                loss = model.loss_fn(labels, logits)
+
+            grads = tape.gradient(loss, model.net.trainable_weights)
+            model.optimizer.apply_gradients(zip(grads, model.net.trainable_weights))
+            return logits, loss
 
         for epoch in range(epochs):
-            total_loss = 0
+            train_loss = 0
+            train_correct = 0
+            train_total = 0
 
-            for i, batch in tqdm(enumerate(self.train_loader), desc=f"epoch {epoch}"):
+            for i, batch in tqdm(enumerate(self.train_loader), desc=f"train: epoch {epoch}"):
                 inputs_a, labels_a = batch.first_pass()
-                inputs_a = model.pom.start_batch(inputs_a/255.)
+                inputs_a = tf.constant(model.pom.start_batch(inputs_a / 255.))
 
+                # first inference
                 logits_a = model.net(inputs_a, training=False)
 
-                # with tf.GradientTape() as tape:
-                #     logits_a = model.net(inputs_a, training=True)
-                #     loss_a = model.loss_fn(labels_a, logits_a)
-                #
-                # grads = tape.gradient(loss_a, model.net.trainable_weights)
-                # model.optimizer.apply_gradients(zip(grads, model.net.trainable_weights))
+                if self.first_step_grad:  # shouldn't use?
+                    logits_a, loss_a = _grad_step(inputs_a, labels_a)
 
+                # update pom and calculate new offsets
                 offsets = model.apply_inference(logits_a)
+
+                # get new input and labels based on offsets
                 inputs_b, labels_b = batch.second_pass(offsets)
-                inputs_b = model.pom.request_poms(inputs_b/255., offsets)
+                inputs_b = tf.constant(model.pom.request_poms(inputs_b / 255., offsets))
 
-                with tf.GradientTape() as tape:
-                    logits_b = model.net(inputs_b, training=True)
-                    loss = model.loss_fn(labels_b, logits_b)
+                # model step
+                logits_b, loss_b = _grad_step(inputs_b, labels_b)
 
-                grads = tape.gradient(loss, model.net.trainable_weights)
-                model.optimizer.apply_gradients(zip(grads, model.net.trainable_weights))
+                # log loss, accuracy
+                train_loss += tf.reduce_sum(loss_b)
+                train_correct += model.calc_accuracy(logits_b, labels_b)
+                train_total += 1
 
-                total_loss += tf.reduce_sum(loss)
-            print(total_loss)
+            print(f"train loss: {train_loss.numpy()}")
+            print(f"train acc: {train_correct / train_total}")
+
+            val_loss = 0
+            val_correct = 0
+            val_total = 0
+
+            for i, batch in tqdm(enumerate(self.val_loader), desc=f"val: epoch {epoch}"):
+                inputs_a, labels_a = batch.first_pass()
+                inputs_a = tf.constant(model.pom.start_batch(inputs_a/255.))
+
+                # first inference
+                logits_a = model.net(inputs_a, training=False)
+
+                # update pom and calculate new offsets
+                offsets = model.apply_inference(logits_a)
+
+                # get new input and labels based on offsets
+                inputs_b, labels_b = batch.second_pass(offsets)
+                inputs_b = tf.constant(model.pom.request_poms(inputs_b/255., offsets))
+
+                # model step
+                logits_b = model.net(inputs_b, training=False)
+                loss_b = model.loss_fn(labels_b, logits_b)
+
+                # log loss, accuracy
+                val_loss += tf.reduce_sum(loss_b)
+                val_correct += model.calc_accuracy(logits_b, labels_b)
+                val_total += 1
+
+            print(f"val loss: {val_loss.numpy()}")
+            print(f"val acc: {val_correct/val_total}")
 
         fig, axes = plt.subplots(2, 4)
         plt.axis('off')
