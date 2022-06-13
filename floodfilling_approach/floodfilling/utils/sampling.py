@@ -64,8 +64,8 @@ def make_image_example(image, centroid):
     return crop(image, centroid, (slice_size, slice_size))
 
 
-def make_if_example(if_image, centroid, trn_dir, example_id):
-    filepath = f'{trn_dir}if_images\\{example_id}_if_image.npy'
+def make_basic_example(if_image, centroid, trn_dir, example_id, cat_dir="if_images"):
+    filepath = f'{trn_dir}{cat_dir}\\{example_id}_{cat_dir}.npy'
     cropped_image = make_image_example(if_image, centroid)
 
     if cropped_image is not None:
@@ -89,6 +89,7 @@ def make_label(cell_image, centroid, trn_dir, example_id, example_cell_id):
 def make_examples_from_dataset(src_dir, trn_dir=const.TRAINING_DIR, overwrite=False):
     cell_image = np.expand_dims(np.load(src_dir + "cell_image.npy"), -1)
     if_image = np.array(cv2.imread(src_dir + "Map2TauImage.png"))
+    rna_image = np.array(cv2.imread(src_dir + "preprocessed.png"))
     centroids = pd.read_csv(src_dir + "centroids.csv")
 
     examples = {}
@@ -106,6 +107,9 @@ def make_examples_from_dataset(src_dir, trn_dir=const.TRAINING_DIR, overwrite=Fa
     if not os.path.isdir(trn_dir + "if_images"):
         os.mkdir(trn_dir + "if_images")
 
+    if not os.path.isdir(trn_dir + "rna"):
+        os.mkdir(trn_dir + "rna")
+
     if not os.path.isdir(trn_dir + "segmentations"):
         os.mkdir(trn_dir + "segmentations")
 
@@ -116,16 +120,18 @@ def make_examples_from_dataset(src_dir, trn_dir=const.TRAINING_DIR, overwrite=Fa
 
         centroid = (int(np.floor(point.soma_centroid_y)), int(np.floor(point.soma_centroid_x)))
 
-        if_path = make_if_example(if_image, centroid, trn_dir, new_id)
+        if_path = make_basic_example(if_image, centroid, trn_dir, new_id)
         if if_path is None:
             continue
+
+        rna_path = make_basic_example(rna_image, centroid, trn_dir, new_id, cat_dir="rna")
 
         label_path, cropped_label = make_label(cell_image, centroid,
                                                trn_dir, new_id, int(point.cell_id))
 
         density = np.average(cropped_label > 0)
 
-        input_ = SampleInput(if_path)
+        input_ = SampleInput(if_path, rna_path)
         label = SampleLabel(label_path)
         properties = SampleProperties(density)
 

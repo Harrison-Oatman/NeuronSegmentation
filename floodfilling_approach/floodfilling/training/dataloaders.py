@@ -13,13 +13,13 @@ def soften_labels(array):
 
 class Batch:
 
-    def __init__(self, samples):
+    def __init__(self, samples, input_attr="image"):
         self.samples = samples
 
         self.window_size = const.WINDOW_SIZE
         self.window_shape = np.array((self.window_size, self.window_size))
 
-        self.sample_inputs = np.array([np.load(sample.input.image) for sample in self.samples])
+        self.sample_inputs = np.array([np.load(getattr(sample.input, input_attr)) for sample in self.samples])
         self.sample_labels = np.array([np.load(sample.label.segmentation) for sample in self.samples])
         self.sample_labels = soften_labels(self.sample_labels)
 
@@ -45,12 +45,14 @@ class Batch:
 
 class Dataloader:
 
-    def __init__(self, split, splitter: Splitter, batch_size=16, shuffle=True):
+    def __init__(self, split, splitter: Splitter, batch_size=16, shuffle=True,
+                 input_attr=const.INPUT_ATTR):
         self.splitter = splitter
         self.samples = self.splitter.get_samples(split)
         self.batch_size = batch_size
         self.i = 0
         self.shuffle = shuffle
+        self.input_attr = input_attr
 
     def batch(self, batch_size):
         self.batch_size = batch_size
@@ -65,7 +67,7 @@ class Dataloader:
         if self.i + self.batch_size > len(self.samples):
             raise StopIteration
 
-        batch = Batch(self.samples[self.i:self.i + self.batch_size])
+        batch = Batch(self.samples[self.i:self.i + self.batch_size], input_attr=self.input_attr)
         self.i += self.batch_size
 
         return batch

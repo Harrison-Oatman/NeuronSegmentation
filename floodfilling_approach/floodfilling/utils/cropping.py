@@ -2,7 +2,7 @@ import numpy as np
 
 
 def crop(data, center, crop_shape):
-    expanded_data = np.expand_dims(data, 0)
+    expanded_data = np.expand_dims(data, [0])
 
     cropped = batch_crop(expanded_data, center, crop_shape)
 
@@ -35,6 +35,10 @@ def batch_crop(data, center, crop_shape):
 
     # calculate start and end
     selector = get_offset_slice(center, crop_shape, data)
+
+    if selector is None:
+        return None
+
     cropped = data[selector]
 
     return cropped

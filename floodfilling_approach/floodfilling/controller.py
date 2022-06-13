@@ -20,6 +20,8 @@ class TrainController:
     def train(self, model: FFN, epochs=20):
 
         for epoch in range(epochs):
+            total_loss = 0
+
             for i, batch in tqdm(enumerate(self.train_loader), desc=f"epoch {epoch}"):
                 inputs_a, labels_a = batch.first_pass()
                 inputs_a = model.pom.start_batch(inputs_a/255.)
@@ -43,6 +45,9 @@ class TrainController:
 
                 grads = tape.gradient(loss, model.net.trainable_weights)
                 model.optimizer.apply_gradients(zip(grads, model.net.trainable_weights))
+
+                total_loss += tf.reduce_sum(loss)
+            print(total_loss)
 
         fig, axes = plt.subplots(2, 4)
         plt.axis('off')

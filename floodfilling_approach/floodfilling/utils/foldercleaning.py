@@ -69,7 +69,7 @@ def write_training_source_folder(src_dir, dst_dir):
     if not os.path.isdir(dst_dir):
         os.mkdir(dst_dir)
 
-    for file in ["Map2TauImage.png", "barcodes.csv"]:
+    for file in ["Map2TauImage.png", "barcodes.csv", "preprocessed.png"]:
         shutil.copy2(src_dir+file, dst_dir+file)
 
     # get boundary image

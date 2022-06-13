@@ -6,6 +6,9 @@ from floodfilling.model.resnet import ConvStack2DFFN
 from floodfilling.controller import TrainController
 import tensorflow as tf
 import datetime
+from floodfilling.utils import sampling
+
+# sampling.main()
 
 # splitter = dataloaders.Splitter()
 # train_loader = dataloaders.Dataloader("train", splitter)
