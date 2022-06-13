@@ -4,6 +4,13 @@ from ..utils import cropping
 from .. import const
 
 
+def soften_labels(array):
+    a = np.empty(array.shape, dtype=np.float32)
+    a.fill(0.05)
+    a[array] = 0.95
+    return a
+
+
 class Batch:
 
     def __init__(self, samples):
@@ -14,6 +21,7 @@ class Batch:
 
         self.sample_inputs = np.array([np.load(sample.input.image) for sample in self.samples])
         self.sample_labels = np.array([np.load(sample.label.segmentation) for sample in self.samples])
+        self.sample_labels = soften_labels(self.sample_labels)
 
     def first_pass(self):
 
@@ -24,36 +32,32 @@ class Batch:
 
     def second_pass(self, offsets):
 
-        inputs = []
-        for i in range(len(self.sample_inputs)):
-            inputs.append(cropping.crop_offset(self.sample_inputs[i:i+1, :],
-                                               offsets[i],
-                                               self.window_shape))
-        cropped_inputs = np.vstack(inputs)
+        cropped_inputs = np.vstack(cropping.batch_crop_offset(self.sample_inputs,
+                                                    offsets,
+                                                    self.window_shape))
 
-        labels = []
-        for i in range(len(self.sample_labels)):
-            labels.append(cropping.crop_offset(self.sample_labels[i:i + 1, :],
-                                               offsets[i, :],
-                                               self.window_shape))
-        cropped_labels = np.vstack(labels)
+        cropped_labels = np.vstack(cropping.batch_crop_offset(self.sample_labels,
+                                                    offsets,
+                                                    self.window_shape))
 
         return cropped_inputs, cropped_labels
 
 
 class Dataloader:
 
-    def __init__(self, split, splitter: Splitter, batch_size=16):
+    def __init__(self, split, splitter: Splitter, batch_size=16, shuffle=True):
         self.splitter = splitter
         self.samples = self.splitter.get_samples(split)
         self.batch_size = batch_size
         self.i = 0
+        self.shuffle = shuffle
 
     def batch(self, batch_size):
         self.batch_size = batch_size
 
     def __iter__(self):
-        np.random.shuffle(self.samples)
+        if self.shuffle:
+            np.random.shuffle(self.samples)
         self.i = 0
         return self
 

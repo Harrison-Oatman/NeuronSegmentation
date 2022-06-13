@@ -1,6 +1,6 @@
-import tensorflow as tf
-from keras.layers import Layer, Conv2D, Add, ReLU
+from keras.layers import Layer, Conv2D, Add, ReLU, BatchNormalizationV2
 from keras import Model
+import tensorflow as tf
 
 
 class ResBlock(Layer):
@@ -31,6 +31,7 @@ class ConvStack2DFFN(Model):
 
         self.depth = depth
 
+        self.batch_norm = BatchNormalizationV2()
         self.conv_0_a = Conv2D(n_filters, kernel_size=(5, 5), padding="same",
                                activation="relu", name="conv_0_a",
                                input_shape=input_shape)
@@ -41,15 +42,15 @@ class ConvStack2DFFN(Model):
                            for i in range(depth)]
 
         self.relu = ReLU(name="relu_final")
-        self.out_layer = Conv2D(1, kernel_size=(1,1), padding="same",
+        self.out_layer = Conv2D(1, kernel_size=(1, 1), padding="same",
                                 activation=None, name="logit_out")
 
+    @tf.function
     def call(self, inputs, training=None, mask=None):
+        # x = self.batch_norm(inputs)
         x = self.conv_0_a(inputs)
         x = self.conv_0_b(x)
         for i in range(self.depth):
             x = self.res_blocks[i](x)
         x = self.relu(x)
         return self.out_layer(x)
-
-
