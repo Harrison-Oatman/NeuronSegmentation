@@ -149,12 +149,12 @@ def main():
     # write_json_examples("C:\\Lab Work\\segmentation\\floodfilling_data\\0520\\file.json", [example_a])
     # examples = load_json_examples("C:\\Lab Work\\segmentation\\floodfilling_data\\0520\\file.json")
 
-    make_examples_from_dataset("C:\\Lab Work\\segmentation\\floodfilling_data\\0520\\")
+    make_examples_from_dataset("C:\\Lab Work\\segmentation\\floodfilling_data\\0605\\")
     # print(const.WINDOW_SIZE)
 
-    examples = load_json_examples(const.TRAINING_DIR+"examples.json")
-    plt.imshow(np.load(examples[0].input.image))
-    plt.show()
+    # examples = load_json_examples(const.TRAINING_DIR+"examples.json")
+    # plt.imshow(np.load(examples[0].input.image))
+    # plt.show()
 
 
 if __name__ == '__main__':

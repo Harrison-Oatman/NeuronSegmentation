@@ -39,8 +39,8 @@ class MoveQueue:
 
             # skip if direction does not reach threshold
             val = max_vals[i]
-            # if val < self.logit_threshold:
-            #     continue
+            if val < self.logit_threshold:
+                continue
 
             # skip if already visited
             true_loc = self.location + self.directions[i]
@@ -57,6 +57,9 @@ class MoveQueue:
         next_loc = None
 
         while visited_loc:
+            if self.to_visit.empty():
+                return None
+
             _, next_loc = self.to_visit.get()
             visited_loc = next_loc in self.visited
 

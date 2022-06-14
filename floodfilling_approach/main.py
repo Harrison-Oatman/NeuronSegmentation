@@ -3,12 +3,16 @@ from floodfilling.model import ffn
 import matplotlib.pyplot as plt
 import numpy as np
 from floodfilling.model.resnet import ConvStack2DFFN
-from floodfilling.controller import TrainController
+from floodfilling.traincontrol import TrainController
 import tensorflow as tf
+import keras
 import datetime
 from floodfilling.utils import sampling
+from floodfilling.utils import foldercleaning
+from floodfilling.inferencecontroller import InferenceController
 
-# sampling.main()
+# foldercleaning.main("0225", False)
+sampling.main()
 
 # splitter = dataloaders.Splitter()
 # train_loader = dataloaders.Dataloader("train", splitter)
@@ -16,15 +20,23 @@ from floodfilling.utils import sampling
 # log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 # writer = tf.summary.create_file_writer(log_dir)
 
-net = ConvStack2DFFN(input_shape=(67, 67, 3))
-model = ffn.FFN()
-model.net = net
-controller = TrainController()
-
-controller.train(model)
-
-net_path = "C:\\Lab Work\\segmentation\\saved_models\\ffnmodel"
-model.net.save()
+# net = ConvStack2DFFN(input_shape=(67, 67, 3))
+# model = ffn.FFN()
+# model.net = net
+# controller = TrainController(first_step_grad=True)
+# #
+# controller.train(model, epochs=20)
+# #
+# net_path = "C:\\Lab Work\\segmentation\\saved_models\\ffnmodel"
+# # model.net.save(net_path)
+#
+# net = keras.models.load_model(net_path)
+#
+# model = ffn.FFN()
+# model.net = net
+#
+# controller = InferenceController()
+# controller.inference(model)
 
 
 # tf.summary.trace_on(graph=True, profiler=True)
@@ -45,8 +57,8 @@ model.net.save()
 #     return model.call(x)
 #
 #
-# trace_me(tf.zeros((1,67,67,3)))
-#
+# plt.imshow(net(tf.random.normal((1,67,67,4)))[0])
+# plt.show()
 # with writer.as_default():
 #     tf.summary.trace_export(name="model_trace", step=0, profiler_outdir=log_dir)
 

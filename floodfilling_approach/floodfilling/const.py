@@ -1,4 +1,5 @@
 TRAINING_DIR = "C:\\Lab Work\\segmentation\\floodfilling_data\\examples\\"
+INFERENCE_DIR = "C:\\Lab Work\\segmentation\\floodfilling_data\\inference\\"
 
 WINDOW_SIZE = 67
 DELTA_MAX = 12

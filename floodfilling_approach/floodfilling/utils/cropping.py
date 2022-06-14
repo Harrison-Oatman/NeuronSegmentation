@@ -50,10 +50,19 @@ def crop_offset(data, offsets, crop_shape):
     return batch_crop(data, centers, crop_shape)
 
 
-def batch_crop_offset(data_list, offset_arr, crop_shape):
+def list_crop_offset(data_list, offset_arr, crop_shape):
     inputs = []
     for i in range(len(data_list)):
-        inputs.append(crop_offset(np.array(data_list[i:i + 1]),
+        inputs.append(crop_offset(np.array(data_list[i]),
+                                  offset_arr[i],
+                                  crop_shape))
+    return inputs
+
+
+def batch_crop_offset(data_arr, offset_arr, crop_shape):
+    inputs = []
+    for i in range(len(data_arr)):
+        inputs.append(crop_offset(np.array(data_arr[i:i+1]),
                                   offset_arr[i],
                                   crop_shape))
     return inputs
@@ -84,7 +93,7 @@ def paste_offset(data, offsets, paste):
 def batch_paste_offset(old_data, offset, new_patch):
     inputs = []
     for i in range(len(old_data)):
-        inputs.append(paste_offset(np.array(old_data[i:i + 1]),
+        inputs.append(paste_offset(np.array(old_data[i]),
                                   offset[i],
                                   new_patch[i:i+1]))
     return inputs

@@ -4,7 +4,7 @@ import tensorflow as tf
 from .. import const
 import numpy as np
 from .pom import POM
-from .movement import BatchMoveQueue
+from .movement import BatchMoveQueue, MoveQueue
 
 class FFN:
 
@@ -34,14 +34,14 @@ class FFN:
 
     def start_inference_batch(self):
         valid_moves, directions = self.valid_modes()
-        self.movequeue = BatchMoveQueue(valid_moves, directions)
+        self.movequeue = MoveQueue(valid_moves, directions)
 
     def start_training_batch(self):
         valid_moves, directions = self.valid_modes()
-        self.movequeue = BatchMoveQueue(valid_moves, directions)
+        self.movequeue = BatchMoveQueue(valid_moves, directions, threshold=0.00000001)
 
-    def apply_inference(self, inference, offsets=None):
-        self.pom.update_poms(inference)
+    def apply_inference(self, inference, inference_step=False):
+        self.pom.update_poms(inference, inference_step)
         self.movequeue.register_visit(inference)
 
     def calc_accuracy(self, inference, labels):

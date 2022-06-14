@@ -6,6 +6,9 @@ import scipy.io as sio
 import cv2 as cv
 import pandas as pd
 from skimage.measure import regionprops
+from ..inference import inferencesamples
+import json
+from dataclasses import dataclass, asdict
 
 
 def get_boundaries(datapath):
@@ -86,13 +89,49 @@ def write_training_source_folder(src_dir, dst_dir):
         centroids["soma_centroid_x"].append(region.centroid[1])
 
     centroids_df = pd.DataFrame(centroids)
-    centroids_df.to_csv(dst+"centroids.csv")
+    centroids_df.to_csv(dst_dir+"centroids.csv")
 
 
-n = "0520"
+def write_inference_test_source_folder(src_dir, dst_dir):
+    if not os.path.isdir(dst_dir):
+        os.mkdir(dst_dir)
 
-src = f"C:\\Lab Work\\segmentation\\training\\{n}\\"
-dst = f"C:\\Lab Work\\segmentation\\floodfilling_data\\{n}\\"
+    for file in ["preprocessed.png"]:
+        shutil.copy2(src_dir+file, dst_dir+file)
 
-write_training_source_folder(src, dst)
+    # get boundary image
+    body_image, process_image, process_names, cell_image = get_boundaries(src_dir)
+    np.save(dst_dir + "cell_image", cell_image)
+
+    centroids = []
+
+    for region in regionprops(body_image):
+        centroids.append(region.centroid)
+
+    np.save(dst_dir+"centroids.npy", centroids)
+
+    inference_example = inferencesamples.InferenceSample(
+        input=dst_dir+"preprocessed.png",
+        centers=dst_dir+"centroids.npy",
+        source=src_dir.rstrip("\\")[-4:],
+        label=dst_dir+"cell_image.npy"
+    )
+
+    json_str = json.dumps(asdict(inference_example), indent=2)
+
+    with open(dst_dir+"inference.json", "w") as f:
+        f.write(json_str)
+
+
+def main(n="0605", train=True):
+
+    src = f"C:\\Lab Work\\segmentation\\training\\{n}\\"
+
+    if train:
+        dst = f"C:\\Lab Work\\segmentation\\floodfilling_data\\{n}\\"
+        write_training_source_folder(src, dst)
+
+    else:
+        dst = f"C:\\Lab Work\\segmentation\\floodfilling_data\\inference\\"
+        write_inference_test_source_folder(src, dst)
 
