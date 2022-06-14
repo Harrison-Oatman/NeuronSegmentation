@@ -36,6 +36,10 @@ class FFN:
         valid_moves, directions = self.valid_modes()
         self.movequeue = BatchMoveQueue(valid_moves, directions)
 
+    def start_training_batch(self):
+        valid_moves, directions = self.valid_modes()
+        self.movequeue = BatchMoveQueue(valid_moves, directions)
+
     def apply_inference(self, inference, offsets=None):
         self.pom.update_poms(inference)
         self.movequeue.register_visit(inference)

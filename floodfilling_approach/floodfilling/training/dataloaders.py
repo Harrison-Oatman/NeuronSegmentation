@@ -2,6 +2,7 @@ from .datasplitter import Splitter
 import numpy as np
 from ..utils import cropping
 from .. import const
+from ..model import movement
 
 
 def soften_labels(array):
@@ -23,6 +24,8 @@ class Batch:
         self.sample_labels = np.array([np.load(sample.label.segmentation) for sample in self.samples])
         self.sample_labels = soften_labels(self.sample_labels)
 
+        self.offsets = None
+
     def first_pass(self):
 
         cropped_inputs = cropping.crop_offset(self.sample_inputs, np.array((0, 0)), self.window_shape)
@@ -30,7 +33,11 @@ class Batch:
 
         return cropped_inputs, cropped_labels
 
-    def second_pass(self, offsets):
+    def second_pass(self, movequeue:movement.BatchMoveQueue):
+
+        offsets = np.array([queue.get_next_loc() for queue in movequeue.movequeues])
+
+        self.offsets = offsets
 
         cropped_inputs = np.vstack(cropping.batch_crop_offset(self.sample_inputs,
                                                     offsets,

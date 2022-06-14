@@ -29,15 +29,18 @@ class MoveQueue:
         """
         centers = self.window_shape // 2
         checks = self.valid_moves + centers
-        vals = inference[1:-1][checks]
+
+        vals = inference[0, ..., 0]
+        vals = np.take(vals, checks[..., 0]*vals.shape[0] + checks[..., 1])
+
         max_vals = np.max(vals, axis=-1)
         go_to = np.argsort(max_vals)
         for i in go_to:
 
             # skip if direction does not reach threshold
             val = max_vals[i]
-            if val < self.logit_threshold:
-                continue
+            # if val < self.logit_threshold:
+            #     continue
 
             # skip if already visited
             true_loc = self.location + self.directions[i]
@@ -60,7 +63,7 @@ class MoveQueue:
         self.location = next_loc
         self.visited.add(next_loc)
 
-        return (off*self.delta for off in next_loc)
+        return tuple(off*self.delta for off in next_loc)
 
 
 class BatchMoveQueue:
@@ -82,6 +85,7 @@ class BatchMoveQueue:
             self.movequeues = [MoveQueue(self.valid_moves, self.directions, self.window_size,
                                          self.delta, self.threshold)
                                for i in range(self.n_children)]
+
 
         for i in range(self.n_children):
             self.movequeues[i].register_visit(inference[i:i+1])

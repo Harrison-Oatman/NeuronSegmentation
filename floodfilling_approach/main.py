@@ -23,6 +23,10 @@ controller = TrainController()
 
 controller.train(model)
 
+net_path = "C:\\Lab Work\\segmentation\\saved_models\\ffnmodel"
+model.net.save()
+
+
 # tf.summary.trace_on(graph=True, profiler=True)
 # tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir)
 
