@@ -4,6 +4,7 @@ import tensorflow as tf
 from .. import const
 import numpy as np
 from .pom import POM
+from .movement import BatchMoveQueue
 
 class FFN:
 
@@ -23,19 +24,21 @@ class FFN:
 
         self.accuracy = 0
 
+        self.movequeue = None
+
     def set_up_optimizer(self):
         self.optimizer = optimizer.optimizer_from_config()
 
     def set_up_loss(self):
         self.loss_fn = tf.nn.sigmoid_cross_entropy_with_logits
 
-    def apply_inference(self, inference):
+    def start_inference_batch(self):
+        valid_moves, directions = self.valid_modes()
+        self.movequeue = BatchMoveQueue(valid_moves, directions)
+
+    def apply_inference(self, inference, offsets=None):
         self.pom.update_poms(inference)
-
-        # todo: implement move calculation
-        next_move = [[12, 0] for _ in inference]
-
-        return next_move
+        self.movequeue.register_visit(inference)
 
     def calc_accuracy(self, inference, labels):
         self.accuracy = 1 - np.average(np.bitwise_xor(inference > 0, labels > 0.5))
@@ -53,4 +56,6 @@ class FFN:
                     cs[-1].append(c)
                     bs[-1].append(b)
 
-        return np.array(np.dstack([ys, xs]))
+        directions = [[0, -1], [0, 1], [-1, 0], [1, 0]]
+
+        return np.array(np.dstack([ys, xs]), dtype=int), np.array(directions, dtype=int)
