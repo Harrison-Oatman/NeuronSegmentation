@@ -32,7 +32,7 @@ class Sample:
     input: SampleInput  # contains filepaths to input
     label: SampleLabel  # contains filepaths to labels
     properties: SampleProperties  # contains extra calculated properties
-    datetime_generated: int = time.time()  # time of generation
+    datetime_generated: str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())  # time of generation
     split: str = None  # train, val, test, or None
 
 
@@ -149,12 +149,13 @@ def main():
     # write_json_examples("C:\\Lab Work\\segmentation\\floodfilling_data\\0520\\file.json", [example_a])
     # examples = load_json_examples("C:\\Lab Work\\segmentation\\floodfilling_data\\0520\\file.json")
 
-    make_examples_from_dataset("C:\\Lab Work\\segmentation\\floodfilling_data\\0605\\")
+    make_examples_from_dataset("C:\\Lab Work\\segmentation\\floodfilling_data\\0605b\\")
     # print(const.WINDOW_SIZE)
 
-    # examples = load_json_examples(const.TRAINING_DIR+"examples.json")
-    # plt.imshow(np.load(examples[0].input.image))
-    # plt.show()
+    examples = load_json_examples(const.TRAINING_DIR+"examples.json")
+    for i in range(200, 210):
+        plt.imshow(np.load(examples[i].label.segmentation))
+        plt.show()
 
 
 if __name__ == '__main__':

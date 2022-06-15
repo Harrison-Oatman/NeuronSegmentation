@@ -11,7 +11,7 @@ import json
 from dataclasses import dataclass, asdict
 
 
-def get_boundaries(datapath):
+def get_boundaries(datapath, min_processes=0):
 
     # get size of immunofluorescence image
     combined_if_image = plt.imread(datapath+"Map2TauImage.png")
@@ -46,6 +46,9 @@ def get_boundaries(datapath):
         if body_boundary.shape[0] == 0:
             continue
 
+        if process_boundary.shape[1] < min_processes:
+            continue
+
         # get names of processes
         names = np.array(boundaries[cc,0][3])
         if len(names) > 0:
@@ -76,7 +79,7 @@ def write_training_source_folder(src_dir, dst_dir):
         shutil.copy2(src_dir+file, dst_dir+file)
 
     # get boundary image
-    body_image, process_image, process_names, cell_image = get_boundaries(src_dir)
+    body_image, process_image, process_names, cell_image = get_boundaries(src_dir, min_processes=2)
     np.save(dst_dir + "cell_image", cell_image)
 
     centroids = {"cell_id": [],
@@ -100,7 +103,7 @@ def write_inference_test_source_folder(src_dir, dst_dir):
         shutil.copy2(src_dir+file, dst_dir+file)
 
     # get boundary image
-    body_image, process_image, process_names, cell_image = get_boundaries(src_dir)
+    body_image, process_image, process_names, cell_image = get_boundaries(src_dir, min_processes=2)
     np.save(dst_dir + "cell_image", cell_image)
 
     centroids = []
@@ -128,7 +131,7 @@ def main(n="0605", train=True):
     src = f"C:\\Lab Work\\segmentation\\training\\{n}\\"
 
     if train:
-        dst = f"C:\\Lab Work\\segmentation\\floodfilling_data\\{n}\\"
+        dst = f"C:\\Lab Work\\segmentation\\floodfilling_data\\{n}b\\"
         write_training_source_folder(src, dst)
 
     else:

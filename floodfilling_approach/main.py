@@ -11,8 +11,10 @@ from floodfilling.utils import sampling
 from floodfilling.utils import foldercleaning
 from floodfilling.inferencecontroller import InferenceController
 
-# foldercleaning.main("0225", False)
-sampling.main()
+# foldercleaning.main()
+# foldercleaning.main("0520")
+
+# sampling.main()
 
 # splitter = dataloaders.Splitter()
 # train_loader = dataloaders.Dataloader("train", splitter)
@@ -20,15 +22,15 @@ sampling.main()
 # log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 # writer = tf.summary.create_file_writer(log_dir)
 
-# net = ConvStack2DFFN(input_shape=(67, 67, 3))
-# model = ffn.FFN()
-# model.net = net
-# controller = TrainController(first_step_grad=True)
-# #
-# controller.train(model, epochs=20)
-# #
-# net_path = "C:\\Lab Work\\segmentation\\saved_models\\ffnmodel"
-# # model.net.save(net_path)
+net = ConvStack2DFFN(input_shape=(67, 67, 3), depth=6, k=7)
+model = ffn.FFN()
+model.net = net
+controller = TrainController(first_step_grad=True)
+#
+controller.train(model, epochs=200)
+# # #
+# net_path = "C:\\Lab Work\\segmentation\\saved_models\\wideffnmodel\\process_set\\"
+# model.net.save(net_path)
 #
 # net = keras.models.load_model(net_path)
 #

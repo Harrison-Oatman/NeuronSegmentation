@@ -5,14 +5,14 @@ import tensorflow as tf
 
 class ResBlock(Layer):
 
-    def __init__(self, n_filters, layer_name="i"):
+    def __init__(self, n_filters, layer_name="i", k=5):
         super(ResBlock, self).__init__()
 
         self.relu = ReLU(name=f"relu_{layer_name}")
-        self.conv_a = Conv2D(n_filters, kernel_size=(5, 5), padding="same",
+        self.conv_a = Conv2D(n_filters, kernel_size=(k, k), padding="same",
                              activation="relu", name=f"resconv{layer_name}_a")
 
-        self.conv_b = Conv2D(n_filters, kernel_size=(5, 5), padding="same",
+        self.conv_b = Conv2D(n_filters, kernel_size=(k, k), padding="same",
                              activation=None, name=f"resconv{layer_name}_b")
         self.add = Add(name=f"add_{layer_name}")
 
@@ -26,16 +26,16 @@ class ResBlock(Layer):
 
 class ConvStack2DFFN(Model):
 
-    def __init__(self, input_shape, n_filters=32, depth=5):
+    def __init__(self, input_shape, n_filters=32, depth=5, k=5):
         super(ConvStack2DFFN, self).__init__()
 
         self.depth = depth
 
-        self.batch_norm = BatchNormalizationV2()
-        self.conv_0_a = Conv2D(n_filters, kernel_size=(5, 5), padding="same",
+        # self.batch_norm = BatchNormalizationV2()
+        self.conv_0_a = Conv2D(n_filters, kernel_size=(k, k), padding="same",
                                activation="relu", name="conv_0_a",
                                input_shape=input_shape)
-        self.conv_0_b = Conv2D(n_filters, kernel_size=(5, 5), padding="same",
+        self.conv_0_b = Conv2D(n_filters, kernel_size=(k, k), padding="same",
                                activation=None, name="conv_0_a")
 
         self.res_blocks = [ResBlock(n_filters, layer_name=str(i))
