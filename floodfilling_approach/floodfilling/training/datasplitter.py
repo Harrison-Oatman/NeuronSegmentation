@@ -1,7 +1,9 @@
 import math
 import numpy as np
+
+from ..sampling import samples
 from .. import const
-from ..utils import sampling
+from ..sampling import sampling
 
 
 class Splitter:
@@ -10,12 +12,12 @@ class Splitter:
                  overwrite_split_labels=False):
         """
         args:
-            train_dir: location of examples.json file
-            split: fraction of training examples
+            train_dir: location of samples.json file
+            split: fraction of training samples
             overwrite_split: whether to keep existing labels
         """
 
-        self.examples = sampling.load_json_examples(train_dir+"examples.json")
+        self.examples = samples.load_json_samples(train_dir + "samples.json")
         self.n_examples = len(self.examples.keys())
         if overwrite_split_labels:
             self.split_ids = {x: [] for x in ["train", "val"]}
@@ -47,7 +49,7 @@ class Splitter:
         for i in new_vals:
             self.examples[i].split = "val"
 
-        sampling.write_json_examples(train_dir + "examples.json", self.examples)
+        samples.write_json_samples(train_dir + "samples.json", self.examples)
 
     def get_samples(self, split):
         return [self.examples[i] for i in self.split_ids[split]]

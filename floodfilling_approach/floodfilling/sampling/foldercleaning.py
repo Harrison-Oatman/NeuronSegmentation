@@ -3,12 +3,12 @@ import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io as sio
+
 import cv2 as cv
 import pandas as pd
 from skimage.measure import regionprops
 from ..inference import inferencesamples
-import json
-from dataclasses import dataclass, asdict
+from .. import const
 
 
 def get_boundaries(datapath, min_processes=0):
@@ -75,55 +75,39 @@ def write_training_source_folder(src_dir, dst_dir):
     if not os.path.isdir(dst_dir):
         os.mkdir(dst_dir)
 
-    for file in ["Map2TauImage.png", "barcodes.csv", "preprocessed.png"]:
+    # for file in ["Map2TauImage.png", "barcodes.csv", "preprocessed.png"]:
+    for file in ["Map2TauImage.png", "barcodes.csv"]:  # rm preprocessed
         shutil.copy2(src_dir+file, dst_dir+file)
 
     # get boundary image
-    body_image, process_image, process_names, cell_image = get_boundaries(src_dir, min_processes=2)
+    min_processes = const.MIN_PROCESSES
+    body_image, process_image, process_names, cell_image = get_boundaries(src_dir, min_processes)
     np.save(dst_dir + "cell_image", cell_image)
-
-    centroids = {"cell_id": [],
-                 "soma_centroid_y": [],
-                 "soma_centroid_x": []}
-
-    for region in regionprops(body_image):
-        centroids["cell_id"].append(region.label)
-        centroids["soma_centroid_y"].append(region.centroid[0])
-        centroids["soma_centroid_x"].append(region.centroid[1])
-
-    centroids_df = pd.DataFrame(centroids)
-    centroids_df.to_csv(dst_dir+"centroids.csv")
+    np.save(dst_dir + "process_image", process_image)
+    np.save(dst_dir + "process_names", process_names)
+    np.save(dst_dir + "body_image", body_image)
+    #
+    # # find seed points
+    # erosion = const.EROSION
+    # centroids = find_seed_pts(cell_image, erosion)
+    # centroids.to_csv(dst_dir + "centroids.csv")
 
 
 def write_inference_test_source_folder(src_dir, dst_dir):
     if not os.path.isdir(dst_dir):
         os.mkdir(dst_dir)
 
-    for file in ["preprocessed.png"]:
+    for file in ["barcodes.csv", "Map2TauImage.png"]:
         shutil.copy2(src_dir+file, dst_dir+file)
 
     # get boundary image
-    body_image, process_image, process_names, cell_image = get_boundaries(src_dir, min_processes=2)
+    min_processes = const.MIN_PROCESSES
+    body_image, process_image, process_names, cell_image = get_boundaries(src_dir, min_processes)
+
     np.save(dst_dir + "cell_image", cell_image)
-
-    centroids = []
-
-    for region in regionprops(body_image):
-        centroids.append(region.centroid)
-
-    np.save(dst_dir+"centroids.npy", centroids)
-
-    inference_example = inferencesamples.InferenceSample(
-        input=dst_dir+"preprocessed.png",
-        centers=dst_dir+"centroids.npy",
-        source=src_dir.rstrip("\\")[-4:],
-        label=dst_dir+"cell_image.npy"
-    )
-
-    json_str = json.dumps(asdict(inference_example), indent=2)
-
-    with open(dst_dir+"inference.json", "w") as f:
-        f.write(json_str)
+    np.save(dst_dir + "process_image", process_image)
+    np.save(dst_dir + "process_names", process_names)
+    np.save(dst_dir + "body_image", body_image)
 
 
 def main(n="0605", train=True):
@@ -131,10 +115,10 @@ def main(n="0605", train=True):
     src = f"C:\\Lab Work\\segmentation\\training\\{n}\\"
 
     if train:
-        dst = f"C:\\Lab Work\\segmentation\\floodfilling_data\\{n}b\\"
+        dst = f"C:\\Lab Work\\segmentation\\floodfilling_data\\{n}\\"
         write_training_source_folder(src, dst)
 
     else:
-        dst = f"C:\\Lab Work\\segmentation\\floodfilling_data\\inference\\"
+        dst = f"C:\\Lab Work\\segmentation\\floodfilling_data\\inference\\{n}\\"
         write_inference_test_source_folder(src, dst)
 

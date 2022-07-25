@@ -1,7 +1,18 @@
 import io
-
+import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
+import warnings
+warnings.filterwarnings( "ignore", module = "matplotlib\..*" )
+"""
+Tools for producing images during training and inference
+"""
+
+
+def normalize(arr):
+    if np.min(arr) == np.max(arr):
+        return np.zeros(arr.shape)
+    return (arr + np.min(arr))/(np.max(arr)-np.min(arr))
 
 
 def plot_to_image(figure):
@@ -29,7 +40,7 @@ def grid_plots(inputs, logits, labels, max_inputs=8):
     for i in range(min(max_inputs, inputs.shape[0])):
         figure, axes = plt.subplots(1, 4)
 
-        axes[0].imshow(inputs[i, ..., :3])
+        axes[0].imshow(normalize(inputs[i, ..., :1]))
         axes[0].set_title("input")
         axes[1].imshow(inputs[i, ..., -1:])
         axes[1].set_title("seed")

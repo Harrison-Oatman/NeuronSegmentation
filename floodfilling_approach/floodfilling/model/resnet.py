@@ -31,7 +31,7 @@ class ConvStack2DFFN(Model):
 
         self.depth = depth
 
-        # self.batch_norm = BatchNormalizationV2()
+        self.batch_norm = BatchNormalizationV2()
         self.conv_0_a = Conv2D(n_filters, kernel_size=(k, k), padding="same",
                                activation="relu", name="conv_0_a",
                                input_shape=input_shape)
@@ -46,11 +46,17 @@ class ConvStack2DFFN(Model):
                                 activation=None, name="logit_out")
 
     @tf.function
-    def call(self, inputs, training=None, mask=None):
-        # x = self.batch_norm(inputs)
-        x = self.conv_0_a(inputs)
+    def call(self, inputs, training=None, mask=None, depth=None):
+        if depth is None:
+            depth = self.depth
+
+        x = self.batch_norm(inputs)
+        x = self.conv_0_a(x)
         x = self.conv_0_b(x)
-        for i in range(self.depth):
+        for i in range(min(self.depth, depth)):
             x = self.res_blocks[i](x)
         x = self.relu(x)
         return self.out_layer(x)
+
+    def graph_trace(self, input_patch):
+        self.call(input_patch)

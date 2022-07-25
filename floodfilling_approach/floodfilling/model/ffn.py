@@ -8,23 +8,41 @@ from .movement import BatchMoveQueue, MoveQueue
 
 class FFN:
 
-    def __init__(self, delta_max=const.DELTA_MAX):
+    def __init__(self, net: ConvStack2DFFN, delta_max=const.DELTA_MAX, train=True):
 
-        self.net = None
+        self.net = net
         self.optimizer = None
         self.loss_fn = None
+        self.input_patch = None
 
         self.pom = POM()
 
         self.delta_max = delta_max
 
-        self.set_up_optimizer()
-        self.set_up_loss()
+        if train:
+            self.set_up_loss()
+            self.set_up_optimizer()
+            self.compile()
+            self.initialize_input_patch()
+
         self.moves = self.valid_modes()
 
         self.accuracy = 0
 
         self.movequeue = None
+
+    def initialize_input_patch(self):
+        self.input_patch = tf.constant(0, dtype=tf.float32,
+                                       shape=(const.BATCH_SIZE_TRAIN,
+                                              const.WINDOW_SIZE,
+                                              const.WINDOW_SIZE,
+                                              const.INPUT_CHANNELS))
+
+        self.net.graph_trace(self.input_patch)
+
+    def compile(self):
+        self.net.compile(optimizer=self.optimizer,
+                         loss=self.loss_fn)
 
     def set_up_optimizer(self):
         self.optimizer = optimizer.optimizer_from_config()

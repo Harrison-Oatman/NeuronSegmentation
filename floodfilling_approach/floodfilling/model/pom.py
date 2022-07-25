@@ -29,10 +29,10 @@ class POM:
 
         # create pom arrays
         pom = np.empty(batch_shape, dtype=np.float32)
-        pom.fill(-0.3)
+        pom.fill(-0.5)
         self.poms = [pom[i:i+1] for i in range(len(pom))]
         for pom in self.poms:
-            pom[centers] = 0.3
+            pom[centers] = 0.5
 
         return np.concatenate([inputs, np.array(self.poms)[:, 0, ...]], axis=-1)
 
@@ -51,7 +51,7 @@ class POM:
             if not (np.all(start == 0) and np.all(end == 0)):
                 self.poms[i] = np.pad(self.poms[i],[(0, 0)]+
                                       [(max(s, e), max(s, e)) for s, e in zip(start, end)] +
-                                      [(0, 0)])
+                                      [(0, 0)], mode='constant', constant_values=0.0)
 
         poms = np.vstack([cropping.crop_offset(pom, offsets[i], self.window_shape)
                           for i, pom in enumerate(self.poms)])

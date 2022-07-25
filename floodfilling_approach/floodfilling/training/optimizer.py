@@ -5,4 +5,4 @@ def optimizer_from_config():
     """
     TODO: returns optimizer based on configs
     """
-    return Adam()
+    return Adam(learning_rate=0.002)

@@ -1,0 +1,1 @@
+tensorboard --logdir logs/fit --samples_per_plugin images=100

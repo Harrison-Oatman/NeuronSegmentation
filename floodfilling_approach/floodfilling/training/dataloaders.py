@@ -3,6 +3,9 @@ import numpy as np
 from ..utils import cropping
 from .. import const
 from ..model import movement
+import matplotlib.pyplot as plt
+from .. import const
+from ..utils.transforms import Transforms
 
 
 def soften_labels(array):
@@ -14,30 +17,41 @@ def soften_labels(array):
 
 class Batch:
 
-    def __init__(self, samples, input_attr="image"):
+    def __init__(self, samples, input_attr="default", label_attr="default"):
         self.samples = samples
 
         self.window_size = const.WINDOW_SIZE
         self.window_shape = np.array((self.window_size, self.window_size))
 
-        self.sample_inputs = np.array([np.load(getattr(sample.input, input_attr)) for sample in self.samples])
-        self.sample_labels = np.array([np.load(sample.label.segmentation) for sample in self.samples])
+        self.sample_inputs = np.array([np.load(sample.input[input_attr]) for sample in self.samples])
+        self.sample_labels = np.array([np.load(sample.label[label_attr]) for sample in self.samples])
         self.sample_labels = soften_labels(self.sample_labels)
 
         self.offsets = None
+        self.transformer = Transforms()
 
     def first_pass(self):
 
         cropped_inputs = cropping.crop_offset(self.sample_inputs, np.array((0, 0)), self.window_shape)
         cropped_labels = cropping.crop_offset(self.sample_labels, np.array((0, 0)), self.window_shape)
 
-        return cropped_inputs, cropped_labels
+        # plt.imshow(cropped_inputs[0, :, :, 1])
+        # plt.show()
+        # raise NotImplementedError
 
-    def second_pass(self, movequeue:movement.BatchMoveQueue):
+        # plt.imshow(cropped_inputs[0, :, :, 1])
+        # plt.show()
+
+        return self.transformer.preprocess(cropped_inputs, cropped_labels)
+
+    def second_pass(self, movequeue: movement.BatchMoveQueue):
 
         offsets = np.array([queue.get_next_loc() for queue in movequeue.movequeues])
 
         self.offsets = offsets
+
+        # print(offsets)
+        # print(self.sample_inputs)
 
         cropped_inputs = np.vstack(cropping.batch_crop_offset(self.sample_inputs,
                                                     offsets,
@@ -47,7 +61,11 @@ class Batch:
                                                     offsets,
                                                     self.window_shape))
 
-        return cropped_inputs, cropped_labels
+        # plt.imshow(cropped_inputs[0, :, :, 1])
+        # plt.show()
+        # raise NotImplementedError
+
+        return self.transformer.preprocess(cropped_inputs, cropped_labels)
 
 
 class Dataloader:
