@@ -1,5 +1,6 @@
 TRAINING_DIR = "C:\\Lab Work\\segmentation\\floodfilling_data\\examples\\"
 INFERENCE_DIR = "C:\\Lab Work\\segmentation\\floodfilling_data\\inference\\"
+DATA_DIR = "C:\\Lab Work\\segmentation\\floodfilling_data\\"
 
 WINDOW_SIZE = 137
 DELTA_MAX = 12
@@ -14,12 +15,21 @@ INPUT_CHANNELS = 3
 NET_PATH = "C:\\Lab Work\\segmentation\\saved_models\\"
 CURRENT_NET_PATH = "C:\\Lab Work\\segmentation\\saved_models\\most_recent\\"
 LOG_PATH = "logs/fit/"
+INFERENCE_OUTPUT_PATH = "C:\\Lab Work\\segmentation\\floodfilling_data\\inference_output\\"
+BRANCH_SAMPLE_PATH = "C:\\Lab Work\\segmentation\\floodfilling_data\\branch_samples\\"
+TRAINING_BLACKLIST = ["0225"]
 
 MIN_PROCESSES = 2
 EROSION = 1
 SAMPLES_PER_CELL = 1
 MIN_LOCS_PER_CELL = 10
 
-VISIT_THRESHOLD = 0.7
+VISIT_THRESHOLD = 0.5
 TRUE_LABEL_VALUE = 0.95
 FALSE_LABEL_VALUE = 0.05
+
+BRANCH_WINDOW_SIZE = 99
+
+MIN_BRANCH_LEN = 10
+
+OVERWRITE_INFERENCE_OUTPUT = False

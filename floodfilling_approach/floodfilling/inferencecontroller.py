@@ -5,6 +5,7 @@ from .model import ffn
 import matplotlib.pyplot as plt
 import numpy as np
 from .inference.overlayinference import GlobalInference
+from .inference.inferencesaver import InferenceLogger
 from tifffile import imwrite
 
 
@@ -13,6 +14,7 @@ class InferenceController:
     def __init__(self, json_file=const.INFERENCE_DIR+"inference.json"):
         self.inference_loader = inferenceloader.InferenceLoader(json_file)
         self.global_inference = GlobalInference(self.inference_loader.image)
+        self.inference_logger = InferenceLogger(self.inference_loader)
 
     def inference(self, model: ffn.FFN, passes=None):
 
@@ -34,7 +36,8 @@ class InferenceController:
                 model.apply_inference(logits, inference_step=True)
 
             # plt.imshow(model.pom.poms[0][0])
-            self.global_inference.overlay(model.pom.poms[0][0], batch.center)
+            # self.global_inference.overlay(model.pom.poms[0][0], batch.center)
+            self.inference_logger.write_pom(model.pom.poms[0][0], batch.center)
 
             if passes is not None:
                 if i >= passes - 1:

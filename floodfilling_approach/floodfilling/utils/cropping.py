@@ -97,3 +97,23 @@ def batch_paste_offset(old_data, offset, new_patch):
                                   offset[i],
                                   new_patch[i:i+1]))
     return inputs
+
+
+def imalign(image_one, image_two, center):
+    y, x = center
+    q, p = image_one.squeeze().shape[:2]
+    m, n = image_two.squeeze().shape[:2]
+
+    aymin = max(y - m // 2 - 1, 0)
+    aymax = min(y + m // 2, q)
+
+    axmin = max(x - n // 2 - 1, 0)
+    axmax = min(x + n // 2, p)
+
+    bymin = max(0, m // 2 + 1 - y)
+    bymax = min(q - y + m // 2 + 1, m)
+
+    bxmin = max(0, n // 2 + 1 - x)
+    bxmax = min(p - x + n // 2 + 1, n)
+
+    return [slice(aymin, aymax), slice(axmin, axmax)], [slice(bymin, bymax), slice(bxmin, bxmax)]

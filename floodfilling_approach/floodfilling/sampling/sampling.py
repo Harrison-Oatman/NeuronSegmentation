@@ -171,7 +171,7 @@ def make_inference_test_from_dataset(src_dir, test_dir=const.INFERENCE_DIR,
 
     json_str = json.dumps(asdict(inference_example), indent=2)
 
-    with open(test_dir + "inference.json", "w") as f:
+    with open(test_dir + source + "_inference.json", "w") as f:
         f.write(json_str)
 
 

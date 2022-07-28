@@ -30,7 +30,7 @@ def branch_labels(process_names=None, process_image=None, **kwargs):
 
     print(branch_image.dtype)
 
-    plt.imshow(branch_image)
-    plt.show()
+    # plt.imshow(branch_image)
+    # plt.show()
 
     return branch_image

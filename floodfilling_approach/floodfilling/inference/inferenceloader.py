@@ -79,6 +79,8 @@ class InferenceLoader:
 
         inference_sample = inference_sample_from_json(json_file)
 
+        self.sample = inference_sample
+
         self.centers = pd.read_csv(inference_sample.centers)
         self.image = np.expand_dims(np.array(np.load(inference_sample.input))/255., 0)
 
@@ -99,9 +101,6 @@ class InferenceLoader:
         while searching_for_batch:
             if self.i >= self.centers.shape[0]:
                 raise StopIteration
-
-            print("start", self.ids[self.i])
-            print("stop")
 
             batch = InferenceBatch(self.image, self.centers.iloc[self.ids[self.i]])
             self.i += 1
