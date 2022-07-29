@@ -19,6 +19,16 @@ def main():
     make_samples_from_dataset(datasets)
 
 
+def load_branch_json_samples(path=BRANCH_SAMPLE_PATH+"samples.json"):
+    with open(path) as f:
+        return json.loads(f.read())
+
+
+def write_branch_json_samples(samples, json_path=BRANCH_SAMPLE_PATH+"samples.json"):
+    with open(json_path, "w") as f:
+        f.write(json.dumps(samples, indent=4))
+
+
 def load_example_data(example):
     example_data = dict()
     example_data["pom"] = np.load(example["inference"])
@@ -39,8 +49,7 @@ def make_samples_from_dataset(datasets, data_dir=DATA_DIR, trn_dir=BRANCH_SAMPLE
 
     if os.path.exists(json_path):
         if not overwrite:
-            with open(json_path) as f:
-                samples = json.loads(f.read())
+            samples = load_branch_json_samples(json_path)
 
     count = 0
 
@@ -106,5 +115,4 @@ def make_samples_from_dataset(datasets, data_dir=DATA_DIR, trn_dir=BRANCH_SAMPLE
 
                 count += 1
 
-    with open(json_path, "w") as f:
-        f.write(json.dumps(samples))
+    write_branch_json_samples(samples, json_path)

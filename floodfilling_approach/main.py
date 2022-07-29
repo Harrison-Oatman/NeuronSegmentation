@@ -3,7 +3,7 @@ from floodfilling.model.resnet import ConvStack2DFFN
 from floodfilling.model import ffn
 from floodfilling.traincontrol import TrainController
 from floodfilling.inferencecontroller import InferenceController
-from floodfilling.branch_merging import branches, trainingsamples
+from floodfilling.branch_merging import branches, trainingsamples, branchloader
 import tensorflow as tf
 from tensorflow import keras
 from floodfilling.const import *
@@ -11,9 +11,11 @@ from floodfilling.const import *
 
 def main():
     # branch()
-    trainingsamples.main()
+    # trainingsamples.main()
     # branch()
     # inference()
+    btl = branchloader.BranchTrainLoader("train", branchloader.BranchSplitter())
+
 
 
 def branch():
