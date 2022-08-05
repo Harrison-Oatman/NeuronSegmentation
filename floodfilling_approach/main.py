@@ -23,6 +23,7 @@ def main():
     controller.run()
     print(np.average(controller.hitscores, axis=-1))
     print(np.average(controller.misscores, axis=-1))
+    controller.display_scores()
 
     # resnet = net.ResNet((99, 99, 5))
     # resnet.compile(optimizer="adam", loss="mse", metrics=["accuracy"],
