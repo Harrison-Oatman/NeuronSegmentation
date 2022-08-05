@@ -19,7 +19,8 @@ class PCARunner:
         self.get_pca()
 
     def get_pca(self):
-        self.pca.fit(self.rna_vecs)
+        nonzero = np.sum(self.rna_vecs, axis=0) > 5
+        self.pca.fit(self.rna_vecs[nonzero, :])
 
     def batch_apply(self, batch: BranchBatch):
         return [self.pca.transform(batch.rna_vecs[i]) for i in range(batch.n)]
@@ -39,8 +40,15 @@ class PCAController:
         for batch in tqdm(self.loader):
             batch_trans = self.pcarunner.batch_apply(batch)
             for i, scores in enumerate(batch_trans):
-                transone = scores[batch.pairs[i][1][0]]
-                transtwo = scores[batch.pairs[i][1][1]]
+                a, b = batch.pairs[i][1]
+                vec_a, vec_b = batch.rna_vecs[i][a], batch.rna_vecs[i][b]
+
+                if np.sum(vec_a) <= 5 or np.sum(vec_b) <= 5:
+                    continue
+
+                transone = scores[a]
+                transtwo = scores[b]
+                
                 diff = np.abs(transone - transtwo)
                 diff = cosine_similarity(transone.reshape(-1,1), transtwo.reshape(-1,1))
                 diff = [abs(spatial.distance.cosine(transone[:i + 1], transtwo[:i + 1])) for i in range(N_COMPONENTS)]
