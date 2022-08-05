@@ -48,9 +48,9 @@ class PCAController:
     def display_scores(self):
         ev = self.pcarunner.pca.explained_variance_ratio_
         fig = plt.figure(figsize=(10, 10))
-        hx = np.mgrid[0:len(self.hitscores), 0:40]
+        hx = np.mgrid[0:len(self.hitscores), 0:40][1]
         sns.scatterplot(x=hx, y=self.hitscores)
-        mx = np.mgrid[0:len(self.misscores), 0:40]
+        mx = np.mgrid[0:len(self.misscores), 0:40][1]
         sns.scatterplot(x=mx, y=self.misscores)
         havg = np.average(self.hitscores, axis=-1)
         mavg = np.average(self.misscores, axis=-1)
