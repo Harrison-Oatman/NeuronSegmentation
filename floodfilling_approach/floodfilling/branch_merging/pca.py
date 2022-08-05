@@ -47,16 +47,18 @@ class PCAController:
 
     def display_scores(self):
         ev = self.pcarunner.pca.explained_variance_ratio_
-        fig = plt.figure(figsize=(10, 10))
+        fig, axes = plt.subplots(2, 2, figsize=(10, 10))
         hx = np.mgrid[0:len(self.hitscores), 0:40][1]
-        sns.scatterplot(x=hx, y=self.hitscores)
+        sns.scatterplot(x=hx, y=self.hitscores, ax=axes[0][0])
         mx = np.mgrid[0:len(self.misscores), 0:40][1]
-        sns.scatterplot(x=mx, y=self.misscores)
+        sns.scatterplot(x=mx, y=self.misscores, ax=axes[0][0])
         havg = np.average(self.hitscores, axis=-1)
         mavg = np.average(self.misscores, axis=-1)
-        sns.plot(x=np.arange(40), y=ev)
-        sns.plot(x=np.arange(40), y=havg, label="hit avg")
-        sns.plot(x=np.arange(40), y=mavg, label="miss avg")
+        sns.plot(x=np.arange(40), y=ev, ax=axes[1][0])
+        sns.plot(x=np.arange(40), y=havg, label="hit avg", ax=axes[0][0])
+        sns.plot(x=np.arange(40), y=mavg, label="miss avg", ax=axes[0][0])
+        sns.plot(x=np.arange(10), y=havg[:10], label="hit avg", ax=axes[0][1])
+        sns.plot(x=np.arange(10), y=mavg[:10], label="miss avg", ax=axes[0][1])
         plt.show()
 
 
