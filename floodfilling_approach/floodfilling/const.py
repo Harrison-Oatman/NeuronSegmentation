@@ -17,6 +17,7 @@ CURRENT_NET_PATH = "C:\\Lab Work\\segmentation\\saved_models\\most_recent\\"
 LOG_PATH = "logs/fit/"
 INFERENCE_OUTPUT_PATH = "C:\\Lab Work\\segmentation\\floodfilling_data\\inference_output\\"
 BRANCH_SAMPLE_PATH = "C:\\Lab Work\\segmentation\\floodfilling_data\\branch_samples\\"
+PCA_SAVE_PATH = "C:\\Lab Work\\segmentation\\floodfilling_data\\rna\\"
 TRAINING_BLACKLIST = ["0225"]
 
 MIN_PROCESSES = 2
@@ -29,8 +30,12 @@ TRUE_LABEL_VALUE = 0.95
 FALSE_LABEL_VALUE = 0.05
 
 BRANCH_WINDOW_SIZE = 99
+BRANCH_INPUT_CHANNELS = 5
 
 MIN_BRANCH_LEN = 10
 BRANCH_BATCH_SIZE_TRAIN = 60
+
+N_RNA_SPECIES = 1240
+N_COMPONENTS = 40
 
 OVERWRITE_INFERENCE_OUTPUT = False

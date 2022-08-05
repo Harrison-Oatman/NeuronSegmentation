@@ -16,7 +16,7 @@ def main():
     with open(json_path) as f:
         datasets = json.loads(f.read())
 
-    make_samples_from_dataset(datasets)
+    make_samples_from_dataset(datasets, overwrite=True)
 
 
 def load_branch_json_samples(path=BRANCH_SAMPLE_PATH+"samples.json"):
@@ -32,6 +32,7 @@ def write_branch_json_samples(samples, json_path=BRANCH_SAMPLE_PATH+"samples.jso
 def load_example_data(example):
     example_data = dict()
     example_data["pom"] = np.load(example["inference"])
+    example_data["threshold"] = np.load(example["threshold"])
     example_data["branch_im"] = np.load(example["branch_im"])
     example_data["branch_seg"] = np.load(example["branch_seg"])
     return example_data
@@ -46,6 +47,7 @@ def make_samples_from_dataset(datasets, data_dir=DATA_DIR, trn_dir=BRANCH_SAMPLE
     # start json samples list
     samples = {}
     json_path = trn_dir + "samples.json"
+    rows = np.zeros((1, N_RNA_SPECIES))
 
     if os.path.exists(json_path):
         if not overwrite:
@@ -55,9 +57,9 @@ def make_samples_from_dataset(datasets, data_dir=DATA_DIR, trn_dir=BRANCH_SAMPLE
 
     for source in datasets.keys():
 
-        if source in [sample["source"] for sample in samples.values()]:
-            print("dataset already parsed, returning...")
-            continue
+        # if source in [sample["source"] for sample in samples.values()]:
+        #     print("dataset already parsed, returning...")
+        #     continue
 
         examples = datasets[source]
 
@@ -71,6 +73,7 @@ def make_samples_from_dataset(datasets, data_dir=DATA_DIR, trn_dir=BRANCH_SAMPLE
         for example in tqdm(examples):
 
             pairs = example["pairs"]
+            example_viewed = True
 
             if len(pairs) == 0:
                 continue
@@ -78,27 +81,34 @@ def make_samples_from_dataset(datasets, data_dir=DATA_DIR, trn_dir=BRANCH_SAMPLE
             example_data = load_example_data(example)
             cropped_input = example_crop(example, example_data, input_data)
             cropped_label = example_crop(example, example_data, label_data)
+            cropped_rna = rna_crop(example, example_data, data)
+            rna = rna_vecs(cropped_rna, example_data)
 
             for pair in pairs:
-                input_frame = pair_crop(pair, cropped_input)
+                # crop data to frame
                 label_frame = pair_crop(pair, cropped_label)
-                pom_frame = pair_crop(pair, example_data["pom"])
                 branch_im_frame = pair_crop(pair, example_data["branch_im"])
-                branch_seg_frame = pair_crop(pair, example_data["branch_seg"])
 
                 # determine if humans have labeled these regions the same
                 label = pair_label(pair, label_frame, branch_im_frame)
                 if label is None:
+                    example_viewed = True
                     continue
+
+                # crop remaining data tp frame
+                pom_frame = pair_crop(pair, example_data["pom"])
+                branch_seg_frame = pair_crop(pair, example_data["branch_seg"])
+                input_frame = pair_crop(pair, cropped_input)
 
                 output = separate_data(pair, pom_frame, branch_seg_frame)
 
-                # make folders for each image type
+                # make folders for example data
                 expand_dir(trn_dir, [str(count)])
                 d = f"{trn_dir}{str(count)}\\"
 
                 input_path = d + "input.npy"
                 poms_path = d + "pom.npy"
+                rna_path = d + "rna.npy"
 
                 sample = dict()
                 sample["source"] = source
@@ -107,12 +117,19 @@ def make_samples_from_dataset(datasets, data_dir=DATA_DIR, trn_dir=BRANCH_SAMPLE
                 sample["poms"] = poms_path
                 sample["label"] = 1 if label else 0
                 sample["id"] = count
+                sample["pair"] = pair
+                sample["rna_vecs"] = rna_path
 
                 np.save(input_path, input_frame)
                 np.save(poms_path, output)
+                np.save(rna_path, rna)
 
                 samples[count] = sample
 
                 count += 1
 
+            if example_viewed:
+                rows = np.vstack((rows, rna))
+
+    np.save(PCA_SAVE_PATH+"rows.npy", rows)
     write_branch_json_samples(samples, json_path)

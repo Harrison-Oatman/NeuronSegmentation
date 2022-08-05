@@ -4,9 +4,13 @@ from floodfilling.model import ffn
 from floodfilling.traincontrol import TrainController
 from floodfilling.inferencecontroller import InferenceController
 from floodfilling.branch_merging import branches, trainingsamples, branchloader
+from floodfilling.branch_merging.model import net
+from floodfilling.branch_merging.pca import PCAController
+from floodfilling.utils.transforms import BranchTransforms
 import tensorflow as tf
 from tensorflow import keras
 from floodfilling.const import *
+import numpy as np
 
 
 def main():
@@ -15,7 +19,29 @@ def main():
     # branch()
     # inference()
     btl = branchloader.BranchTrainLoader("train", branchloader.BranchSplitter())
+    controller = PCAController(btl)
+    controller.run()
+    print(np.average(controller.hitscores, axis=-1))
+    print(np.average(controller.misscores, axis=-1))
 
+    # resnet = net.ResNet((99, 99, 5))
+    # resnet.compile(optimizer="adam", loss="mse", metrics=["accuracy"],
+    #                weighted_metrics=["accuracy"])
+    #
+    # bs = branchloader.BranchSplitter()
+    # batch = branchloader.BranchBatch(bs.get_samples("train"))
+    # inputs, labels = batch.data()
+    # sample_weights = tf.constant(batch.sample_weights())
+    #
+    # resnet.fit(inputs, labels, epochs=100, sample_weight=sample_weights,
+    #            validation_split=0.2)
+    #
+    # val_batch = branchloader.BranchBatch(bs.get_samples("val"))
+    # val_inputs, val_labels = val_batch.data()
+    # val_sample_weights = tf.constant(val_batch.sample_weights())
+    # # resnet.evaluate()
+    #
+    # print(resnet(inputs[20:40]), labels[20:40])
 
 
 def branch():
@@ -64,9 +90,11 @@ def inference():
     })
     model = ffn.FFN(net, train=False)
 
-    for src in ["0520", "0602", "0605", "0613", "0807", "0812", "0814",
-                "1014", "1028", "1030", "1102", "1107"
-                ]:
+    with "0225" as src:
+
+    # for src in ["0520", "0602", "0605", "0613", "0807", "0812", "0814",
+    #             "1014", "1028", "1030", "1102", "1107"
+    #             ]:
         foldercleaning.main(src, False)
         sampling.main(src, False)
 

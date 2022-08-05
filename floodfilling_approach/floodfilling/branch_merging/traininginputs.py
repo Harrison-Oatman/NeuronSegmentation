@@ -2,13 +2,41 @@ from ..utils.cropping import imalign, crop
 from ..const import *
 import numpy as np
 import matplotlib.pyplot as plt
+from math import floor
 
 
 def example_crop(example, example_data, data):
     x, y, = int(example["centerx"]), int(example["centery"])
     a_slice, b_slice = imalign(data, example_data["pom"], (y, x))
     # print("slices", a_slice, b_slice)
-    return data[a_slice]
+    return data[tuple(a_slice)]
+
+
+def rna_vecs(rna, example_data):
+    thresholded = example_data["threshold"] * example_data["branch_seg"]
+    vals = np.max(thresholded)
+    vec = np.zeros((vals + 1, N_RNA_SPECIES))
+
+    for row, pt in rna.iterrows():
+        # print(pt)
+        vec[thresholded[floor(pt["y"] - 1), floor(pt["x"] - 1)], int(pt["barcode_id"])] += 1
+
+    return vec
+
+
+def rna_crop(example, example_data, data):
+    x, y, = int(example["centerx"]), int(example["centery"])
+    a_slice, b_slice = imalign(data["if_image"], example_data["pom"], (y, x))
+    ymin, ymax = a_slice[0].start, a_slice[0].stop
+    xmin, xmax = a_slice[1].start, a_slice[1].stop
+
+    rna = data["rna"]
+    rna_slice = rna[rna["global_y"].between(ymin, ymax)]
+    rna_slice = rna_slice[rna_slice["global_x"].between(xmin, xmax)]
+    rna_slice = rna_slice.copy()
+    rna_slice["y"] = rna_slice["global_y"] - ymin
+    rna_slice["x"] = rna_slice["global_x"] - xmin
+    return rna_slice
 
 
 def pair_crop(pair, data):

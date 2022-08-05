@@ -11,6 +11,7 @@ class Transforms:
     def preprocess(self, inputs, label):
         inputs = inputs.copy()
         inputs[..., 0] /= 255.
+        label = [0.05 if i == 0 else 0.95 for i in label]
         input_out = tf.constant(inputs, dtype=tf.float32)
         label_out = tf.constant(label, dtype=tf.float32)
 

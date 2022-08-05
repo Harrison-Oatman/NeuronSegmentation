@@ -51,10 +51,11 @@ def segment_image(pom, i=0):
     thresholded = pom > 0
     thresholded = remove_small_objects(thresholded, min_size=100)
     thresholded = remove_small_holes(thresholded, area_threshold=25)
+    thresholded = thresholded > 0
     skeletonized = skeletonize(thresholded)
 
-    if np.sum(skeletonized) < 5*255:
-        return [], [], None, None
+    if np.sum(skeletonized > 0) < 5:
+        return [], [], None, None, None
 
     skel = skan.csr.Skeleton(skeletonized, source_image=pom)
 
@@ -68,7 +69,17 @@ def segment_image(pom, i=0):
     pairs, branches = get_connected_components(skel, root_branch - 1)
     pairs = list((skel.coordinates[p[0]], (p[1][0] + 1, p[1][1] + 1)) for p in pairs)
     branches = list(branch + 1 for branch in branches)
-    return pairs, branches, branch_labeled, nearest_val
+
+    # plt.imshow(pom)
+    # plt.show()
+    # plt.imshow(thresholded)
+    # plt.show()
+    # plt.imshow(branch_labeled)
+    # plt.show()
+    # plt.imshow(nearest_val - branch_labeled)
+    # plt.show()
+
+    return pairs, branches, branch_labeled, nearest_val, thresholded
 
 
 def load_branches(json_path, out_path):
@@ -81,20 +92,23 @@ def load_branches(json_path, out_path):
         examples = datasets[source]
         for i, example in tqdm(enumerate(examples)):
             pom = np.load(example['inference'])
-            pairs, branches, branch_labeled, branch_seg = segment_image(pom, i)
+            pairs, branches, branch_labeled, branch_seg, thresh = segment_image(pom, i)
 
             pairs = [([int(a) for a in p[0]], [int(a) for a in p[1]]) for p in pairs]
             branches = [int(b) for b in branches]
 
             branch_im_path = INFERENCE_OUTPUT_PATH + "examples\\" + f"branch_im_{source}_{i}.npy"
             branch_seg_path = INFERENCE_OUTPUT_PATH + "examples\\" + f"branch_seg_{source}_{i}.npy"
+            branch_thresholds_path = INFERENCE_OUTPUT_PATH + "examples\\" + f"thresholds_{source}_{i}.npy"
 
             example['branch_im'] = branch_im_path
             example['branch_seg'] = branch_seg_path
+            example["threshold"] = branch_thresholds_path
             example['pairs'] = pairs
             example['branches'] = branches
 
             np.save(branch_im_path, branch_labeled)
+            np.save(branch_thresholds_path, thresh)
             np.save(branch_seg_path, branch_seg)
 
             examples[i] = example

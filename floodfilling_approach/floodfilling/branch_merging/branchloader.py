@@ -84,13 +84,21 @@ class BranchBatch:
 
     def __init__(self, samples):
         self.samples = samples
+        self.n = len(self.samples)
         self.poms = np.array([np.load(sample["poms"]) for sample in self.samples])
         self.inputs = np.array([np.load(sample["input"]) for sample in self.samples])
         self.labels = np.array([sample["label"] for sample in self.samples])
+        self.rna_vecs = np.array([np.load(sample["rna_vecs"]) for sample in self.samples])
+        self.pairs = np.array([sample["pair"] for sample in self.samples])
 
         self.transformer = BranchTransforms()
 
     def data(self):
         return self.transformer.preprocess(self.inputs, self.poms, self.labels)
 
+    def sample_weights(self):
+        avg_true = np.average(self.labels)
+        false_weight = avg_true / (1 - avg_true + 0.000001)
+        sample_weights = [false_weight if a < 0.5 else 1 for a in self.labels]
+        return sample_weights
 
